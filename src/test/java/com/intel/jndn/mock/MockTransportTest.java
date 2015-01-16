@@ -15,11 +15,7 @@ import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterest;
-import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,12 +35,12 @@ public class MockTransportTest {
   private static final Logger logger = LogManager.getLogger();
 
   /**
-   * Test of getSentBuffer method, of class MockTransport.
+   * Test sending Data
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
   @Test
-  public void testGetSentBuffer() throws IOException, EncodingException {
+  public void testSendData() throws IOException, EncodingException {
     MockTransport transport = new MockTransport();
     Face face = new Face(transport, null);
 
@@ -69,6 +65,9 @@ public class MockTransportTest {
     }
   }
   
+  /**
+   * Count reference
+   */
   class Counter{
     int count = 0;
     public void inc(){
@@ -76,58 +75,6 @@ public class MockTransportTest {
     }
     public int get(){
       return count;
-    }
-  }
-
-  /**
-   * Test of getSentBuffer method, of class MockTransport.
-   */
-//  @Test
-//  public void testGetSentBuffer() {
-//    MockTransport transport = new MockTransport();
-//    Face face = new Face(transport, null);
-//
-//    // setup return data
-//    int typeCode = 101;
-//    int[] tlvBytes = new int[]{1, 200};
-//
-//    // register prefix
-//    try {
-//      Name prefix = new Name("/a/b/c");
-//      logger.info("Registering prefix: " + prefix.toUri());
-//      long id = face.registerPrefix(prefix, new TestOnInterest(), new TestOnRegisterFailed());
-//      assertTrue(id > 0);
-//    } catch (IOException | SecurityException e) {
-//      fail("Failed to register prefix.");
-//    }
-//  }
-//  class TestOnData implements OnData {
-//
-//    @Override
-//    public void onData(Interest interest, Data data) {
-//      assertEquals(data.getName(), new Name("/a/b/c"));
-//      assertEquals(data.getContent(), new Blob("..."));
-//    }
-//  }
-  class TestOnInterest implements OnInterest {
-
-    @Override
-    public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
-      Data data = new Data(interest.getName());
-      data.setContent(new Blob("..."));
-      try {
-        transport.send(data.wireEncode().buf());
-      } catch (IOException e) {
-        fail("Failed to send packet.");
-      }
-    }
-  }
-
-  class TestOnRegisterFailed implements OnRegisterFailed {
-
-    @Override
-    public void onRegisterFailed(Name prefix) {
-      fail("Failed to register prefix.");
     }
   }
 }
