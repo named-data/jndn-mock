@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.encoding.ElementListener;
 import net.named_data.jndn.encoding.ElementReader;
 import net.named_data.jndn.encoding.EncodingException;
@@ -33,46 +34,15 @@ public class MockTransport extends Transport {
   public final static int BUFFER_CAPACITY = 8000;
   private static final Logger logger = LogManager.getLogger();
   protected boolean connected;
+  protected ElementReader elementReader;
   protected ByteBuffer inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
   protected ByteBuffer outputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-  protected ElementReader elementReader;
-  protected List<Data> outputPackets = new ArrayList<>();
+  protected List<Data> outputDataPackets = new ArrayList<>();
+  protected List<Interest> outputInterestPackets = new ArrayList<>();
 
   /**
-   * Retrieve sent bytes
-   *
-   * @return
-   */
-  public ByteBuffer getSentBuffer() {
-    return outputBuffer;
-  }
-
-  /**
-   *
-   */
-  public void clear() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  /**
-   *
-   * @return
-   */
-  public List<Data> getSentDataPackets() {
-    return outputPackets;
-  }
-
-  /**
-   * Retrieve received bytes; this is mocked by adding bytes to the buffer with
-   * respondWith()
-   *
-   * @return
-   */
-  public ByteBuffer getReceivedBuffer() {
-    return inputBuffer;
-  }
-
-  /**
+   * Place data in the receive queue; when processEvents() is called, the
+   * calling application will receive these bytes.
    *
    * @param response
    */
@@ -81,6 +51,8 @@ public class MockTransport extends Transport {
   }
 
   /**
+   * Place data in the receive queue; when processEvents() is called, the
+   * calling application will receive this packet.
    *
    * @param response
    */
@@ -89,7 +61,56 @@ public class MockTransport extends Transport {
   }
 
   /**
-   * Mock connection
+   * Place data in the receive queue; when processEvents() is called, the
+   * calling application will receive this packet.
+   *
+   * @param request
+   */
+  public void respondWith(Interest request) {
+    respondWith(request.wireEncode().buf());
+  }
+
+  /**
+   * Inspect the bytes sent using this transport.
+   *
+   * @return
+   */
+  public ByteBuffer getSentBuffer() {
+    return outputBuffer;
+  }
+
+  /**
+   * Inspect the list of data packets sent using this transport; the
+   * alternative is to inspect getSentBuffer().
+   *
+   * @return
+   */
+  public List<Data> getSentDataPackets() {
+    return outputDataPackets;
+  }
+
+  /**
+   * Inspect the list of interest packets sent using this transport; the
+   * alternative is to inspect getSentBuffer().
+   *
+   * @return
+   */
+  public List<Interest> getSentInterestPackets() {
+    return outputInterestPackets;
+  }
+  
+  /**
+   * Clear all sent and to-be-received data
+   */
+  public void clear() {
+    inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    outputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    outputDataPackets.clear();
+    outputInterestPackets.clear();
+  }
+
+  /**
+   * Mock the connection startup; calls this processEvents().
    *
    * @param connectionInfo
    * @param elementListener
@@ -105,7 +126,7 @@ public class MockTransport extends Transport {
 
   /**
    * Mock sending data to the host; access the data as bytes using
-   * getSentBuffer() or as packets with getSentDataPackets()
+   * getSentBuffer() or as packets with getSentDataPackets().
    *
    * @param data The buffer of data to send. This reads from position() to
    * limit(), but does not change the position.
@@ -120,12 +141,45 @@ public class MockTransport extends Transport {
     data.flip();
 
     // add to sent packets
+    byte first = data.get();
+    if (first == 5) {
+      data.position(0);
+      addInterest(data);
+    } else if (first == 6) {
+      data.position(0);
+      addData(data);
+    } else {
+      logger.warn("Unknown TLV packet type; cannot parse");
+    }
+  }
+
+  /**
+   * Helper method to parse Data packets.
+   * 
+   * @param data 
+   */
+  protected void addData(ByteBuffer data) {
+    Data packet = new Data();
     try {
-      Data packet = new Data();
       packet.wireDecode(data);
-      outputPackets.add(new Data());
+      outputDataPackets.add(new Data());
     } catch (EncodingException e) {
       logger.warn("Failed to parse bytes into a data packet");
+    }
+  }
+
+  /**
+   * Helper method to parse Interest packets.
+   * 
+   * @param data 
+   */
+  protected void addInterest(ByteBuffer data) {
+    Interest packet = new Interest();
+    try {
+      packet.wireDecode(data);
+      outputDataPackets.add(new Data());
+    } catch (EncodingException e) {
+      logger.warn("Failed to parse bytes into an interest packet");
     }
   }
 
@@ -143,14 +197,13 @@ public class MockTransport extends Transport {
       return;
     }
 
+    // trace data sent
     logger.trace(String.format("Sending buffer (position: %s, limit: %s, capacity: %s): %s", inputBuffer.position(), inputBuffer.limit(), inputBuffer.capacity(), Arrays.toString(inputBuffer.array())));
 
     // pass data up to face
     inputBuffer.limit(inputBuffer.position());
     inputBuffer.position(0);
     elementReader.onReceivedData(inputBuffer);
-
-    logger.trace(String.format("Sending buffer (position: %s, limit: %s, capacity: %s): %s", inputBuffer.position(), inputBuffer.limit(), inputBuffer.capacity(), Arrays.toString(inputBuffer.array())));
 
     // reset buffer
     inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);

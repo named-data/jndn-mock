@@ -24,7 +24,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Mock the transport class Example: ...
+ * Mock the transport class
+ * TODO add face.registerPrefix() example
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -36,7 +37,8 @@ public class MockTransportTest {
   private static final Logger logger = LogManager.getLogger();
 
   /**
-   * Test sending Data
+   * Test sending a Data packet.
+   * 
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
@@ -68,7 +70,8 @@ public class MockTransportTest {
   
   
   /**
-   * Test sending multiple Datas
+   * Test sending multiple Data packets.
+   * 
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
