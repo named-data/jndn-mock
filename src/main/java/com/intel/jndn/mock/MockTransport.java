@@ -13,6 +13,7 @@ package com.intel.jndn.mock;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.encoding.ElementListener;
@@ -47,15 +48,15 @@ public class MockTransport extends Transport {
   }
 
   /**
-   * 
+   *
    */
   public void clear() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
   /**
-   * 
-   * @return 
+   *
+   * @return
    */
   public List<Data> getSentDataPackets() {
     return outputPackets;
@@ -113,7 +114,7 @@ public class MockTransport extends Transport {
   @Override
   public void send(ByteBuffer data) throws IOException {
     logger.debug("Sending " + (data.capacity() - data.position()) + " bytes");
-    
+
     // add to sent bytes
     outputBuffer.put(data);
     data.flip();
@@ -142,10 +143,14 @@ public class MockTransport extends Transport {
       return;
     }
 
+    logger.trace(String.format("Sending buffer (position: %s, limit: %s, capacity: %s): %s", inputBuffer.position(), inputBuffer.limit(), inputBuffer.capacity(), Arrays.toString(inputBuffer.array())));
+
     // pass data up to face
-    inputBuffer.limit(inputBuffer.capacity());
+    inputBuffer.limit(inputBuffer.position());
     inputBuffer.position(0);
     elementReader.onReceivedData(inputBuffer);
+
+    logger.trace(String.format("Sending buffer (position: %s, limit: %s, capacity: %s): %s", inputBuffer.position(), inputBuffer.limit(), inputBuffer.capacity(), Arrays.toString(inputBuffer.array())));
 
     // reset buffer
     inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
