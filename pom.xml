@@ -38,12 +38,12 @@
     <repository>
       <id>ubit-artifactory-or.intel.com</id>
       <name>ubit-artifactory-or.intel.com-releases</name>
-      <url>https://ubit-artifactory-or.intel.com/artifactory/ext-releases-local</url>
+      <url>https://ubit-artifactory-or.intel.com/artifactory/libs-snapshot-local</url>
     </repository>
     <snapshotRepository>
       <id>ubit-artifactory-or.intel.com</id>
       <name>ubit-artifactory-or.intel.com-snapshots</name>
-      <url>https://ubit-artifactory-or.intel.com/artifactory/ext-snapshots-local</url>
+      <url>https://ubit-artifactory-or.intel.com/artifactory/libs-snapshot-local</url>
     </snapshotRepository>
   </distributionManagement>
 </project>
