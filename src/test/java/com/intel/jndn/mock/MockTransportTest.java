@@ -24,8 +24,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Mock the transport class
- * TODO add face.registerPrefix() example
+ * Mock the transport class TODO add face.registerPrefix() example
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -38,7 +37,7 @@ public class MockTransportTest {
 
   /**
    * Test sending a Data packet.
-   * 
+   *
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
@@ -62,16 +61,20 @@ public class MockTransportTest {
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
-    
-    while(count.get() == 0){
+
+    // process the face until one response
+    while (count.get() == 0) {
       face.processEvents();
     }
+
+    // check for sent packets
+    assertEquals(0, transport.getSentDataPackets().size());
+    assertEquals(1, transport.getSentInterestPackets().size());
   }
-  
-  
+
   /**
    * Test sending multiple Data packets.
-   * 
+   *
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
@@ -98,11 +101,16 @@ public class MockTransportTest {
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
-    
-    while(count.get() == 0){
+
+    // process the face until one response received
+    while (count.get() == 0) {
       face.processEvents();
     }
-    
+
+    // check for sent packets
+    assertEquals(0, transport.getSentDataPackets().size());
+    assertEquals(1, transport.getSentInterestPackets().size());
+
     // express interest again, but this time it should time out because there 
     // is no data left on the wire; the first processEvents() has already 
     // picked it up
@@ -115,28 +123,36 @@ public class MockTransportTest {
         count2.inc();
         fail("Should not return data; data should already be cleared");
       }
-    }, new OnTimeout(){
+    }, new OnTimeout() {
       @Override
       public void onTimeout(Interest interest) {
         count2.inc();
         assertTrue(true);
       }
     });
-    
-    while(count2.get() == 0){
+
+    // process the face until timeout
+    while (count2.get() == 0) {
       face.processEvents();
     }
+
+    // check for sent packets
+    assertEquals(0, transport.getSentDataPackets().size());
+    assertEquals(2, transport.getSentInterestPackets().size());
   }
-  
+
   /**
    * Count reference
    */
-  class Counter{
+  class Counter {
+
     int count = 0;
-    public void inc(){
+
+    public void inc() {
       count++;
     }
-    public int get(){
+
+    public int get() {
       return count;
     }
   }

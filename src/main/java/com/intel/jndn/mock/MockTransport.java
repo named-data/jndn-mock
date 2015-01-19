@@ -31,14 +31,14 @@ import org.apache.logging.log4j.Logger;
  */
 public class MockTransport extends Transport {
 
-  public final static int BUFFER_CAPACITY = 8000;
+  public final static int BUFFER_CAPACITY = 2000;
   private static final Logger logger = LogManager.getLogger();
   protected boolean connected;
   protected ElementReader elementReader;
-  protected ByteBuffer inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-  protected ByteBuffer outputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-  protected List<Data> outputDataPackets = new ArrayList<>();
-  protected List<Interest> outputInterestPackets = new ArrayList<>();
+  protected ByteBuffer buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+  protected ByteBuffer sentBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+  protected List<Data> sentDataPackets = new ArrayList<>();
+  protected List<Interest> sentInterestPackets = new ArrayList<>();
 
   /**
    * Place data in the receive queue; when processEvents() is called, the
@@ -47,7 +47,7 @@ public class MockTransport extends Transport {
    * @param response
    */
   public void respondWith(ByteBuffer response) {
-    inputBuffer.put(response);
+    buffer.put(response);
   }
 
   /**
@@ -76,7 +76,7 @@ public class MockTransport extends Transport {
    * @return
    */
   public ByteBuffer getSentBuffer() {
-    return outputBuffer;
+    return sentBuffer;
   }
 
   /**
@@ -86,7 +86,7 @@ public class MockTransport extends Transport {
    * @return
    */
   public List<Data> getSentDataPackets() {
-    return outputDataPackets;
+    return sentDataPackets;
   }
 
   /**
@@ -96,17 +96,17 @@ public class MockTransport extends Transport {
    * @return
    */
   public List<Interest> getSentInterestPackets() {
-    return outputInterestPackets;
+    return sentInterestPackets;
   }
   
   /**
    * Clear all sent and to-be-received data
    */
   public void clear() {
-    inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    outputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    outputDataPackets.clear();
-    outputInterestPackets.clear();
+    buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    sentBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    sentDataPackets.clear();
+    sentInterestPackets.clear();
   }
 
   /**
@@ -137,19 +137,21 @@ public class MockTransport extends Transport {
     logger.debug("Sending " + (data.capacity() - data.position()) + " bytes");
 
     // add to sent bytes
-    outputBuffer.put(data);
+    buffer.put(data);
     data.flip();
-
+    sentBuffer.put(data);
+    data.flip();
+ 
     // add to sent packets
     byte first = data.get();
     if (first == 5) {
       data.position(0);
-      addInterest(data);
+      addSentInterest(data);
     } else if (first == 6) {
       data.position(0);
-      addData(data);
+      addSentData(data);
     } else {
-      logger.warn("Unknown TLV packet type; cannot parse");
+      logger.warn("Unknown TLV packet type; cannot parse.");
     }
   }
 
@@ -158,11 +160,11 @@ public class MockTransport extends Transport {
    * 
    * @param data 
    */
-  protected void addData(ByteBuffer data) {
+  protected void addSentData(ByteBuffer data) {
     Data packet = new Data();
     try {
       packet.wireDecode(data);
-      outputDataPackets.add(new Data());
+      sentDataPackets.add(packet);
     } catch (EncodingException e) {
       logger.warn("Failed to parse bytes into a data packet");
     }
@@ -173,11 +175,11 @@ public class MockTransport extends Transport {
    * 
    * @param data 
    */
-  protected void addInterest(ByteBuffer data) {
+  protected void addSentInterest(ByteBuffer data) {
     Interest packet = new Interest();
     try {
       packet.wireDecode(data);
-      outputDataPackets.add(new Data());
+      sentInterestPackets.add(packet);
     } catch (EncodingException e) {
       logger.warn("Failed to parse bytes into an interest packet");
     }
@@ -198,15 +200,15 @@ public class MockTransport extends Transport {
     }
 
     // trace data sent
-    logger.trace(String.format("Sending buffer (position: %s, limit: %s, capacity: %s): %s", inputBuffer.position(), inputBuffer.limit(), inputBuffer.capacity(), Arrays.toString(inputBuffer.array())));
+    logger.trace(String.format("Processing buffer (position: %s, limit: %s, capacity: %s): %s", buffer.position(), buffer.limit(), buffer.capacity(), Arrays.toString(buffer.array())));
 
     // pass data up to face
-    inputBuffer.limit(inputBuffer.position());
-    inputBuffer.position(0);
-    elementReader.onReceivedData(inputBuffer);
+    buffer.limit(buffer.position());
+    buffer.position(0);
+    elementReader.onReceivedData(buffer);
 
     // reset buffer
-    inputBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
   }
 
   /**
