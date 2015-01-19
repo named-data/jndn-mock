@@ -73,10 +73,10 @@ public class MockFace {
   /**
    * Handle incoming Interest packets; when an Interest is expressed through
    * expressInterest(), this will run to determine if: 1) any responses have
-   * been registered or 2) if any OnInterest handlers have been registered.
-   * If one of these two succeeds, this method then re-directs the Interest from 
+   * been registered or 2) if any OnInterest handlers have been registered. If
+   * one of these two succeeds, this method then re-directs the Interest from
    * traveling down the network stack and returns data.
-   * 
+   *
    * @param interest
    */
   protected void handleIncomingRequests(Interest interest) {
@@ -87,14 +87,12 @@ public class MockFace {
       logger.debug("Found response for: " + interestName);
       Data data = responseMap.get(interestName);
       ((MockTransport) node_.getTransport()).respondWith(data);
-    } 
-    // check if handler registered
+    } // check if handler registered
     else if (registeredPrefixId != -1) {
       logger.debug("Found handler for: " + interestName);
       MockOnInterestHandler handler = handlerMap.get(findRegisteredHandler(interest));
       handler.onInterest.onInterest(handler.prefix, interest, node_.getTransport(), registeredPrefixId);
-    }
-    // log failure
+    } // log failure
     else {
       logger.warn("No response found for interest (aborting): " + interestName);
     }
@@ -103,9 +101,9 @@ public class MockFace {
   /**
    * Find a handler that matches the incoming interest; currently, the only
    * flags supported are the ChildInherit flags.
-   * 
+   *
    * @param interest
-   * @return 
+   * @return
    */
   protected long findRegisteredHandler(Interest interest) {
     for (Entry<Long, MockOnInterestHandler> entry : handlerMap.entrySet()) {

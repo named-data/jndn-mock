@@ -134,7 +134,7 @@ public class MockTransport extends Transport {
    */
   @Override
   public void send(ByteBuffer data) throws IOException {
-    logger.debug("Sending " + (data.capacity() - data.position()) + " bytes");
+    logger.debug("Sending " + (data.capacity() - data.position()) + " bytes: " + Arrays.toString(data.array()));
 
     // add to sent bytes
     buffer.put(data);
