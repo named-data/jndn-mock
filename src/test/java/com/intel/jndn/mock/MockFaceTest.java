@@ -31,7 +31,7 @@ public class MockFaceTest {
   private static final Logger logger = LogManager.getLogger();
 
   /**
-   * Test of addResponse method, of class MockFace.
+   * Test setting responses for specific names
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
@@ -66,7 +66,8 @@ public class MockFaceTest {
   }
 
   /**
-   * Test of removeResponse method, of class MockFace.
+   * Test serving data dynamically with OnInterest handlers
+   * 
    * @throws net.named_data.jndn.encoding.EncodingException
    * @throws java.io.IOException
    * @throws net.named_data.jndn.security.SecurityException
@@ -111,6 +112,8 @@ public class MockFaceTest {
     }
     assertEquals(1, count.get());
   }
+  
+  // TODO add childInherit test
 
   /**
    * Count reference
