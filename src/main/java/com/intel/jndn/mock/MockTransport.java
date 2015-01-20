@@ -80,8 +80,8 @@ public class MockTransport extends Transport {
   }
 
   /**
-   * Inspect the list of data packets sent using this transport; the
-   * alternative is to inspect getSentBuffer().
+   * Inspect the list of data packets sent using this transport; the alternative
+   * is to inspect getSentBuffer().
    *
    * @return
    */
@@ -98,7 +98,7 @@ public class MockTransport extends Transport {
   public List<Interest> getSentInterestPackets() {
     return sentInterestPackets;
   }
-  
+
   /**
    * Clear all sent and to-be-received data
    */
@@ -141,7 +141,7 @@ public class MockTransport extends Transport {
     data.flip();
     sentBuffer.put(data);
     data.flip();
- 
+
     // add to sent packets
     byte first = data.get();
     if (first == 5) {
@@ -157,8 +157,8 @@ public class MockTransport extends Transport {
 
   /**
    * Helper method to parse Data packets.
-   * 
-   * @param data 
+   *
+   * @param data
    */
   protected void addSentData(ByteBuffer data) {
     Data packet = new Data();
@@ -172,8 +172,8 @@ public class MockTransport extends Transport {
 
   /**
    * Helper method to parse Interest packets.
-   * 
-   * @param data 
+   *
+   * @param data
    */
   protected void addSentInterest(ByteBuffer data) {
     Interest packet = new Interest();
