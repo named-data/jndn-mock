@@ -5,6 +5,7 @@
   <artifactId>jndn-mock</artifactId>
   <version>0.9.1</version>
   <packaging>jar</packaging>
+ <description>Tools for testing NDN Java code without using network IO</description>
   <dependencies>
     <dependency>
       <groupId>net.named_data.jndn</groupId>
