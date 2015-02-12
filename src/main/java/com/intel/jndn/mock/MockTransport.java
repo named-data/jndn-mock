@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class MockTransport extends Transport {
 
-  public final static int BUFFER_CAPACITY = 2000;
+  public final static int BUFFER_CAPACITY = 8000;
   private static final Logger logger = LogManager.getLogger();
   protected boolean connected;
   protected ElementReader elementReader;

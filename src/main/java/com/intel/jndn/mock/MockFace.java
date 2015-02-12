@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
@@ -27,10 +28,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * Use the MockTransport to mock sending data over the network. Allows for
+ * testing NDN applications while simulating network IO. TODO implement longest
+ * prefix match here for comprehensive testing.
+ * </p>
+ * <p>
+ * Usage
+ * </p>
+ * <pre><code>
+ * Face mockFace = new MockFace();
+ * mockFace.registerPrefix(...); // as usual
+ * mockFace.expressInterest(...); // as usual
+ *
+ * // also, simply inject a response that will be returned for an expressed interest
+ * mockFace.addResponse(interestName, data);
+ * </pre></code>
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class MockFace {
+public class MockFace extends Face {
 
   private static final Logger logger = LogManager.getLogger();
   private final Node node_;
@@ -152,6 +169,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Interest interest, OnData onData, OnTimeout onTimeout,
           WireFormat wireFormat) throws IOException {
     long id = node_.expressInterest(interest, onData, onTimeout, wireFormat);
@@ -177,6 +195,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Interest interest, OnData onData, OnTimeout onTimeout) throws IOException {
     return expressInterest(interest, onData, onTimeout, WireFormat.getDefaultWireFormat());
   }
@@ -195,6 +214,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Interest interest, OnData onData, WireFormat wireFormat) throws IOException {
     return expressInterest(interest, onData, null, wireFormat);
   }
@@ -213,6 +233,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Interest interest, OnData onData) throws IOException {
     return expressInterest(interest, onData, null, WireFormat.getDefaultWireFormat());
   }
@@ -238,6 +259,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, Interest interestTemplate, OnData onData, OnTimeout onTimeout,
           WireFormat wireFormat) throws IOException {
     Interest interest = new Interest(name);
@@ -279,6 +301,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, OnData onData, OnTimeout onTimeout,
           WireFormat wireFormat) throws IOException {
     return expressInterest(name, null, onData, onTimeout, wireFormat);
@@ -302,6 +325,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, Interest interestTemplate, OnData onData,
           WireFormat wireFormat) throws IOException {
     return expressInterest(name, interestTemplate, onData, null, wireFormat);
@@ -328,6 +352,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, Interest interestTemplate, OnData onData,
           OnTimeout onTimeout) throws IOException {
     return expressInterest(name, interestTemplate, onData, onTimeout,
@@ -351,6 +376,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, Interest interestTemplate, OnData onData) throws IOException {
     return expressInterest(name, interestTemplate, onData, null, WireFormat.getDefaultWireFormat());
   }
@@ -374,6 +400,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, OnData onData, OnTimeout onTimeout) throws IOException {
     return expressInterest(name, null, onData, onTimeout, WireFormat.getDefaultWireFormat());
   }
@@ -394,6 +421,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, OnData onData, WireFormat wireFormat) throws IOException {
     return expressInterest(name, null, onData, null, wireFormat);
   }
@@ -414,6 +442,7 @@ public class MockFace {
    * removePendingInterest.
    * @throws IOException For I/O error in sending the interest.
    */
+  @Override
   public long expressInterest(Name name, OnData onData) throws IOException {
     return expressInterest(name, null, onData, null, WireFormat.getDefaultWireFormat());
   }
@@ -426,10 +455,9 @@ public class MockFace {
    *
    * @param pendingInterestId The ID returned from expressInterest.
    */
-  public void removePendingInterest(long pendingInterestId) {
-    node_.removePendingInterest(pendingInterestId);
-  }
-
+//  public void removePendingInterest(long pendingInterestId) {
+//    node_.removePendingInterest(pendingInterestId);
+//  }
   /**
    * Register prefix with the connected NDN hub and call onInterest when a
    * matching interest is received. If you have not called
@@ -455,6 +483,7 @@ public class MockFace {
    * @throws SecurityException If signing a command interest for NFD and cannot
    * find the private key for the certificateName.
    */
+  @Override
   public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
           ForwardingFlags flags, WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
     lastRegisteredId++;
@@ -480,6 +509,7 @@ public class MockFace {
    * removeRegisteredPrefix.
    * @throws IOException For I/O error in sending the registration request.
    */
+  @Override
   public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
           ForwardingFlags flags) throws IOException, net.named_data.jndn.security.SecurityException {
     return registerPrefix(prefix, onInterest, onRegisterFailed, flags,
@@ -504,6 +534,7 @@ public class MockFace {
    * @throws SecurityException If signing a command interest for NFD and cannot
    * find the private key for the certificateName.
    */
+  @Override
   public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
           WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
     return registerPrefix(prefix, onInterest, onRegisterFailed, new ForwardingFlags(), wireFormat);
@@ -527,6 +558,7 @@ public class MockFace {
    * @throws SecurityException If signing a command interest for NFD and cannot
    * find the private key for the certificateName.
    */
+  @Override
   public long registerPrefix(Name prefix, OnInterest onInterest,
           OnRegisterFailed onRegisterFailed) throws IOException, net.named_data.jndn.security.SecurityException {
     return registerPrefix(prefix, onInterest, onRegisterFailed, new ForwardingFlags(),
@@ -542,10 +574,9 @@ public class MockFace {
    *
    * @param registeredPrefixId The ID returned from registerPrefix.
    */
-  public void removeRegisteredPrefix(long registeredPrefixId) {
-    handlerMap.remove(registeredPrefixId);
-  }
-
+//  public void removeRegisteredPrefix(long registeredPrefixId) {
+//    handlerMap.remove(registeredPrefixId);
+//  }
   /**
    * Process any packets to receive and call callbacks such as onData,
    * onInterest or onTimeout. This returns immediately if there is no data to
@@ -558,6 +589,7 @@ public class MockFace {
    * or in the callback for processing the data. If you call this from an main
    * event loop, you may want to catch and log/disregard all exceptions.
    */
+  @Override
   public void processEvents() throws IOException, EncodingException {
     // Just call Node's processEvents.
     node_.processEvents();
@@ -566,7 +598,7 @@ public class MockFace {
   /**
    * Shut down and disconnect this Face.
    */
-  public void shutdown() {
-    node_.shutdown();
-  }
+//  public void shutdown() {
+//    node_.shutdown();
+//  }
 }
