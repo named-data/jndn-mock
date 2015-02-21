@@ -15,14 +15,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.encoding.ElementListener;
 import net.named_data.jndn.encoding.ElementReader;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.transport.Transport;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Mock the transport class Example: ...
@@ -32,7 +31,7 @@ import org.apache.logging.log4j.Logger;
 public class MockTransport extends Transport {
 
   public final static int BUFFER_CAPACITY = 8000;
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(MockTransport.class.getName());
   protected boolean connected;
   protected ElementReader elementReader;
   protected ByteBuffer buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
@@ -119,7 +118,7 @@ public class MockTransport extends Transport {
   @Override
   public void connect(Transport.ConnectionInfo connectionInfo,
           ElementListener elementListener) throws IOException {
-    logger.debug("Connecting...");
+    logger.fine("Connecting...");
     connected = true;
     elementReader = new ElementReader(elementListener);
   }
@@ -134,7 +133,7 @@ public class MockTransport extends Transport {
    */
   @Override
   public void send(ByteBuffer data) throws IOException {
-    logger.debug("Sending " + (data.capacity() - data.position()) + " bytes");
+    logger.fine("Sending " + (data.capacity() - data.position()) + " bytes");
 
     // add to sent bytes
     buffer.put(data);
@@ -151,7 +150,7 @@ public class MockTransport extends Transport {
       data.position(0);
       addSentData(data);
     } else {
-      logger.warn("Unknown TLV packet type; cannot parse.");
+      logger.warning("Unknown TLV packet type; cannot parse.");
     }
   }
 
@@ -166,7 +165,7 @@ public class MockTransport extends Transport {
       packet.wireDecode(data);
       sentDataPackets.add(packet);
     } catch (EncodingException e) {
-      logger.warn("Failed to parse bytes into a data packet");
+      logger.warning("Failed to parse bytes into a data packet");
     }
   }
 
@@ -181,7 +180,7 @@ public class MockTransport extends Transport {
       packet.wireDecode(data);
       sentInterestPackets.add(packet);
     } catch (EncodingException e) {
-      logger.warn("Failed to parse bytes into an interest packet");
+      logger.warning("Failed to parse bytes into an interest packet");
     }
   }
 
@@ -195,12 +194,12 @@ public class MockTransport extends Transport {
   @Override
   public void processEvents() throws IOException, EncodingException {
     if (!getIsConnected()) {
-      logger.warn("Not connnected, aborting...");
+      logger.warning("Not connnected, aborting...");
       return;
     }
 
     // trace data sent
-    logger.trace(String.format("Processing buffer (position: %s, limit: %s, capacity: %s): %s", buffer.position(), buffer.limit(), buffer.capacity(), Arrays.toString(buffer.array())));
+    logger.finer(String.format("Processing buffer (position: %s, limit: %s, capacity: %s): %s", buffer.position(), buffer.limit(), buffer.capacity(), Arrays.toString(buffer.array())));
 
     // pass data up to face
     buffer.limit(buffer.position());
@@ -228,7 +227,7 @@ public class MockTransport extends Transport {
    */
   @Override
   public void close() throws IOException {
-    logger.debug("Closing...");
+    logger.fine("Closing...");
     connected = false;
   }
 }

@@ -12,6 +12,7 @@ package com.intel.jndn.mock;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
@@ -24,8 +25,6 @@ import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.WireFormat;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -49,7 +48,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class MockFace extends Face {
 
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(MockFace.class.getName());
   private final Node node_;
   HashMap<String, Data> responseMap = new HashMap<>();
   HashMap<Long, MockOnInterestHandler> handlerMap = new HashMap<>();
@@ -73,7 +72,7 @@ public class MockFace extends Face {
    * @param data
    */
   public void addResponse(Name name, Data data) {
-    logger.debug("Added response for: " + name.toUri());
+    logger.fine("Added response for: " + name.toUri());
     responseMap.put(name.toUri(), data);
   }
 
@@ -83,7 +82,7 @@ public class MockFace extends Face {
    * @param name
    */
   public void removeResponse(Name name) {
-    logger.debug("Removed response for: " + name.toUri());
+    logger.fine("Removed response for: " + name.toUri());
     responseMap.remove(name);
   }
 
@@ -101,17 +100,17 @@ public class MockFace extends Face {
     long registeredPrefixId = findRegisteredHandler(interest);
     // check if response registered
     if (responseMap.containsKey(interestName)) {
-      logger.debug("Found response for: " + interestName);
+      logger.fine("Found response for: " + interestName);
       Data data = responseMap.get(interestName);
       ((MockTransport) node_.getTransport()).respondWith(data);
     } // check if handler registered
     else if (registeredPrefixId != -1) {
-      logger.debug("Found handler for: " + interestName);
+      logger.fine("Found handler for: " + interestName);
       MockOnInterestHandler handler = handlerMap.get(findRegisteredHandler(interest));
       handler.onInterest.onInterest(handler.prefix, interest, node_.getTransport(), registeredPrefixId);
     } // log failure
     else {
-      logger.warn("No response found for interest (aborting): " + interestName);
+      logger.warning("No response found for interest (aborting): " + interestName);
     }
   }
 

@@ -1,11 +1,16 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * File name: MockFaceTest.java
+ * 
+ * Purpose: Test MockFace functionality.
+ * 
+ * © Copyright Intel Corporation. All rights reserved.
+ * Intel Corporation, 2200 Mission College Boulevard,
+ * Santa Clara, CA 95052-8119, USA
  */
 package com.intel.jndn.mock;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
@@ -14,12 +19,11 @@ import net.named_data.jndn.OnInterest;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
+ * Test MockFace functionality
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
@@ -28,10 +32,11 @@ public class MockFaceTest {
   /**
    * Setup logging
    */
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(MockFaceTest.class.getName());
 
   /**
    * Test setting responses for specific names
+   *
    * @throws java.io.IOException
    * @throws net.named_data.jndn.encoding.EncodingException
    */
@@ -51,7 +56,7 @@ public class MockFaceTest {
       @Override
       public void onData(Interest interest, Data data) {
         count.inc();
-        logger.debug("Received data");
+        logger.fine("Received data");
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
@@ -67,7 +72,7 @@ public class MockFaceTest {
 
   /**
    * Test serving data dynamically with OnInterest handlers
-   * 
+   *
    * @throws net.named_data.jndn.encoding.EncodingException
    * @throws java.io.IOException
    * @throws net.named_data.jndn.security.SecurityException
@@ -81,7 +86,7 @@ public class MockFaceTest {
     face.registerPrefix(new Name("/test/with/handlers"), new OnInterest() {
       @Override
       public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
-        logger.debug("Received interest, responding: " + interest.getName().toUri());
+        logger.fine("Received interest, responding: " + interest.getName().toUri());
         Data response = new Data(new Name("/test/with/handlers"));
         response.setContent(new Blob("..."));
         try {
@@ -99,7 +104,7 @@ public class MockFaceTest {
       @Override
       public void onData(Interest interest, Data data) {
         count.inc();
-        logger.debug("Received data");
+        logger.fine("Received data");
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
@@ -112,9 +117,8 @@ public class MockFaceTest {
     }
     assertEquals(1, count.get());
   }
-  
-  // TODO add childInherit test
 
+  // TODO add childInherit test
   /**
    * Count reference
    */

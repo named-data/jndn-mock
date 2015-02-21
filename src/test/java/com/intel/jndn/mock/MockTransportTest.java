@@ -1,7 +1,7 @@
 /*
  * File name: MockTransportTest.java
  * 
- * Purpose: Test the MockTransport
+ * Purpose: Test the MockTransport functionality.
  * 
  * © Copyright Intel Corporation. All rights reserved.
  * Intel Corporation, 2200 Mission College Boulevard,
@@ -10,6 +10,7 @@
 package com.intel.jndn.mock;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
@@ -18,8 +19,6 @@ import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.util.Blob;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -33,7 +32,7 @@ public class MockTransportTest {
   /**
    * Setup logging
    */
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = Logger.getLogger(MockTransportTest.class.getName());
 
   /**
    * Test sending a Data packet.
@@ -57,7 +56,7 @@ public class MockTransportTest {
       @Override
       public void onData(Interest interest, Data data) {
         count.inc();
-        logger.debug("Received data");
+        logger.fine("Received data");
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
@@ -97,7 +96,7 @@ public class MockTransportTest {
       @Override
       public void onData(Interest interest, Data data) {
         count.inc();
-        logger.debug("Received data");
+        logger.fine("Received data");
         assertEquals(data.getContent().buf(), new Blob("...").buf());
       }
     });
