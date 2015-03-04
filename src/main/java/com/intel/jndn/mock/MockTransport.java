@@ -1,12 +1,15 @@
 /*
- * File name: MockTransport.java
- * 
- * Purpose: Provide testing functionality for running NDN unit tests without
- * connecting to the network or requiring an NFD installed.
- * 
- * © Copyright Intel Corporation. All rights reserved.
- * Intel Corporation, 2200 Mission College Boulevard,
- * Santa Clara, CA 95052-8119, USA
+ * jndn-mock
+ * Copyright (c) 2015, Intel Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU Lesser General Public License,
+ * version 3, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+ * more details.
  */
 package com.intel.jndn.mock;
 
@@ -38,6 +41,16 @@ public class MockTransport extends Transport {
   protected ByteBuffer sentBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
   protected List<Data> sentDataPackets = new ArrayList<>();
   protected List<Interest> sentInterestPackets = new ArrayList<>();
+
+  /**
+   * This transport is always local
+   *
+   * @param connectionInfo
+   * @return
+   */
+  public boolean isLocal(Transport.ConnectionInfo connectionInfo) {
+    return true;
+  }
 
   /**
    * Place data in the receive queue; when processEvents() is called, the
