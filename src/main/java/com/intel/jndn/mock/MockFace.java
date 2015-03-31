@@ -29,6 +29,7 @@ import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.WireFormat;
+import net.named_data.jndn.transport.Transport;
 
 /**
  * <p>
@@ -64,6 +65,13 @@ public class MockFace extends Face {
    */
   public MockFace() {
     node_ = new Node(new MockTransport(), null);
+  }
+
+  /**
+   * @return a reference to the current MockTransport
+   */
+  public MockTransport getTransport() {
+    return (MockTransport) node_.getTransport();
   }
 
   /**
