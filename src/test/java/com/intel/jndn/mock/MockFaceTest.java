@@ -21,6 +21,7 @@ import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnInterest;
 import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 import org.junit.Test;
@@ -137,5 +138,19 @@ public class MockFaceTest {
     public int get() {
       return count;
     }
+  }
+
+  /**
+   * Ensure registering a prefix connects the underlying transport
+   *
+   * @throws IOException
+   * @throws SecurityException
+   */
+  @Test
+  public void testRegistrationConnectsTransport() throws IOException, SecurityException {
+    MockFace face = new MockFace();
+    assertFalse(face.getTransport().getIsConnected());
+    face.registerPrefix(new Name("/fake/prefix"), null, null);
+    assertTrue(face.getTransport().getIsConnected());
   }
 }

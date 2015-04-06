@@ -497,6 +497,10 @@ public class MockFace extends Face {
   @Override
   public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
           ForwardingFlags flags, WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
+    // since we don't send an Interest, ensure the transport is connected
+    if (!getTransport().getIsConnected())
+      getTransport().connect(node_.getConnectionInfo(), node_);
+    
     lastRegisteredId++;
     handlerMap.put(lastRegisteredId, new MockOnInterestHandler(prefix, onInterest, flags));
     return lastRegisteredId;
