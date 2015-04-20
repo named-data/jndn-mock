@@ -150,7 +150,7 @@ public class MockFaceTest {
   public void testRegistrationConnectsTransport() throws IOException, SecurityException {
     MockFace face = new MockFace();
     assertFalse(face.getTransport().getIsConnected());
-    face.registerPrefix(new Name("/fake/prefix"), null, null);
+    face.registerPrefix(new Name("/fake/prefix"), (OnInterest) null, null);
     assertTrue(face.getTransport().getIsConnected());
   }
 }

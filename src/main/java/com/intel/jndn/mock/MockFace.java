@@ -14,6 +14,7 @@
 package com.intel.jndn.mock;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -21,14 +22,17 @@ import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.Node;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnInterest;
+import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.OnRegisterFailed;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.WireFormat;
+import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
 
 /**
@@ -51,7 +55,7 @@ import net.named_data.jndn.transport.Transport;
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class MockFace extends Face {
+public class MockFace extends FaceExtension {
 
   private static final Logger logger = Logger.getLogger(MockFace.class.getName());
   private final Node node_;
@@ -119,7 +123,7 @@ public class MockFace extends Face {
     else if (registeredPrefixId != -1) {
       logger.fine("Found handler for: " + interestName);
       MockOnInterestHandler handler = handlerMap.get(findRegisteredHandler(interest));
-      handler.onInterest.onInterest(handler.prefix, interest, node_.getTransport(), registeredPrefixId);
+      handler.signal(interest, registeredPrefixId);
     } // log failure
     else {
       logger.warning("No response found for interest (aborting): " + interestName);
@@ -153,12 +157,28 @@ public class MockFace extends Face {
 
     Name prefix;
     OnInterest onInterest;
+    OnInterestCallback onInterestCallback;
     ForwardingFlags flags;
 
     public MockOnInterestHandler(Name prefix, OnInterest onInterest, ForwardingFlags flags) {
       this.prefix = prefix;
       this.onInterest = onInterest;
       this.flags = flags;
+    }
+    
+    public MockOnInterestHandler(Name prefix, OnInterestCallback onInterestCallback, ForwardingFlags flags) {
+      this.prefix = prefix;
+      this.onInterestCallback = onInterestCallback;
+      this.flags = flags;
+    }
+    
+    public void signal(Interest interest, long registeredPrefixId){
+      if(onInterest != null){
+        onInterest.onInterest(prefix, interest, node_.getTransport(), registeredPrefixId);
+      }
+      if(onInterestCallback != null){
+        onInterestCallback.onInterest(prefix, interest, MockFace.this, registeredPrefixId, null);
+      }
     }
   }
 
@@ -189,287 +209,6 @@ public class MockFace extends Face {
   }
 
   /**
-   * Send the Interest through the transport, read the entire response and call
-   * onData(interest, data). This uses the default
-   * WireFormat.getDefaultWireFormat().
-   *
-   * @param interest The Interest to send. This copies the Interest.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param onTimeout If the interest times out according to the interest
-   * lifetime, this calls onTimeout.onTimeout(interest) where interest is the
-   * interest given to expressInterest. If onTimeout is null, this does not use
-   * it.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Interest interest, OnData onData, OnTimeout onTimeout) throws IOException {
-    return expressInterest(interest, onData, onTimeout, WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Send the Interest through the transport, read the entire response and call
-   * onData(interest, data). Ignore if the interest times out.
-   *
-   * @param interest The Interest to send. This copies the Interest.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Interest interest, OnData onData, WireFormat wireFormat) throws IOException {
-    return expressInterest(interest, onData, null, wireFormat);
-  }
-
-  /**
-   * Send the Interest through the transport, read the entire response and call
-   * onData(interest, data). Ignore if the interest times out. This uses the
-   * default WireFormat.getDefaultWireFormat().
-   *
-   * @param interest The Interest to send. This copies the Interest.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Interest interest, OnData onData) throws IOException {
-    return expressInterest(interest, onData, null, WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data).
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param interestTemplate If not null, copy interest selectors from the
-   * template. This does not keep a pointer to the Interest object.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param onTimeout If the interest times out according to the interest
-   * lifetime, this calls onTimeout.onTimeout(interest) where interest is the
-   * interest given to expressInterest. If onTimeout is null, this does not use
-   * it.
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, Interest interestTemplate, OnData onData, OnTimeout onTimeout,
-          WireFormat wireFormat) throws IOException {
-    Interest interest = new Interest(name);
-    if (interestTemplate != null) {
-      interest.setMinSuffixComponents(interestTemplate.getMinSuffixComponents());
-      interest.setMaxSuffixComponents(interestTemplate.getMaxSuffixComponents());
-      interest.setKeyLocator(interestTemplate.getKeyLocator());
-      interest.setExclude(interestTemplate.getExclude());
-      interest.setChildSelector(interestTemplate.getChildSelector());
-      interest.setMustBeFresh(interestTemplate.getMustBeFresh());
-      interest.setScope(interestTemplate.getScope());
-      interest.setInterestLifetimeMilliseconds(
-              interestTemplate.getInterestLifetimeMilliseconds());
-      // Don't copy the nonce.
-    } else {
-      interest.setInterestLifetimeMilliseconds(4000.0);
-    }
-
-    return expressInterest(interest, onData, onTimeout, wireFormat);
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Use a default interest
-   * lifetime.
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param onTimeout If the interest times out according to the interest
-   * lifetime, this calls onTimeout.onTimeout(interest) where interest is the
-   * interest given to expressInterest. If onTimeout is null, this does not use
-   * it.
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, OnData onData, OnTimeout onTimeout,
-          WireFormat wireFormat) throws IOException {
-    return expressInterest(name, null, onData, onTimeout, wireFormat);
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Ignore if the interest
-   * times out.
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param interestTemplate If not null, copy interest selectors from the
-   * template. This does not keep a pointer to the Interest object.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, Interest interestTemplate, OnData onData,
-          WireFormat wireFormat) throws IOException {
-    return expressInterest(name, interestTemplate, onData, null, wireFormat);
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). This uses the default
-   * WireFormat.getDefaultWireFormat().
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param interestTemplate If not null, copy interest selectors from the
-   * template. This does not keep a pointer to the Interest object.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param onTimeout If the interest times out according to the interest
-   * lifetime, this calls onTimeout.onTimeout(interest) where interest is the
-   * interest given to expressInterest. If onTimeout is null, this does not use
-   * it.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, Interest interestTemplate, OnData onData,
-          OnTimeout onTimeout) throws IOException {
-    return expressInterest(name, interestTemplate, onData, onTimeout,
-            WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Ignore if the interest
-   * times out. This uses the default WireFormat.getDefaultWireFormat().
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param interestTemplate If not null, copy interest selectors from the
-   * template. This does not keep a pointer to the Interest object.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, Interest interestTemplate, OnData onData) throws IOException {
-    return expressInterest(name, interestTemplate, onData, null, WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Use a default interest
-   * lifetime. This uses the default WireFormat.getDefaultWireFormat().
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param onTimeout If the interest times out according to the interest
-   * lifetime, this calls onTimeout.onTimeout(interest) where interest is the
-   * interest given to expressInterest. If onTimeout is null, this does not use
-   * it.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, OnData onData, OnTimeout onTimeout) throws IOException {
-    return expressInterest(name, null, onData, onTimeout, WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Use a default interest
-   * lifetime. Ignore if the interest times out.
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, OnData onData, WireFormat wireFormat) throws IOException {
-    return expressInterest(name, null, onData, null, wireFormat);
-  }
-
-  /**
-   * Encode name as an Interest. If interestTemplate is not null, use its
-   * interest selectors. Send the interest through the transport, read the
-   * entire response and call onData(interest, data). Use a default interest
-   * lifetime. Ignore if the interest times out. This uses the default
-   * WireFormat.getDefaultWireFormat().
-   *
-   * @param name A Name for the interest. This copies the Name.
-   * @param onData When a matching data packet is received, this calls
-   * onData.onData(interest, data) where interest is the interest given to
-   * expressInterest and data is the received Data object. NOTE: You must not
-   * change the interest object - if you need to change it then make a copy.
-   * @return The pending interest ID which can be used with
-   * removePendingInterest.
-   * @throws IOException For I/O error in sending the interest.
-   */
-  @Override
-  public long expressInterest(Name name, OnData onData) throws IOException {
-    return expressInterest(name, null, onData, null, WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Remove the pending interest entry with the pendingInterestId from the
-   * pending interest table. This does not affect another pending interest with
-   * a different pendingInterestId, even if it has the same interest name. If
-   * there is no entry with the pendingInterestId, do nothing.
-   *
-   * @param pendingInterestId The ID returned from expressInterest.
-   */
-//  public void removePendingInterest(long pendingInterestId) {
-//    node_.removePendingInterest(pendingInterestId);
-//  }
-  /**
    * Register prefix with the connected NDN hub and call onInterest when a
    * matching interest is received. If you have not called
    * setCommandSigningInfo, this assumes you are connecting to NDNx. If you have
@@ -498,100 +237,27 @@ public class MockFace extends Face {
   public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
           ForwardingFlags flags, WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
     // since we don't send an Interest, ensure the transport is connected
-    if (!getTransport().getIsConnected())
+    if (!getTransport().getIsConnected()) {
       getTransport().connect(node_.getConnectionInfo(), node_);
-    
+    }
+
     lastRegisteredId++;
     handlerMap.put(lastRegisteredId, new MockOnInterestHandler(prefix, onInterest, flags));
     return lastRegisteredId;
   }
 
-  /**
-   * Register prefix with the connected NDN hub and call onInterest when a
-   * matching interest is received. This uses the default
-   * WireFormat.getDefaultWireFormat().
-   *
-   * @param prefix A Name for the prefix to register. This copies the Name.
-   * @param onInterest When an interest is received which matches the name
-   * prefix, this calls onInterest.onInterest(prefix, interest, transport,
-   * registeredPrefixId). NOTE: You must not change the prefix object - if you
-   * need to change it then make a copy.
-   * @param onRegisterFailed If register prefix fails for any reason, this calls
-   * onRegisterFailed.onRegisterFailed(prefix).
-   * @param flags The flags for finer control of which interests are forwarded
-   * to the application.
-   * @return The lastRegisteredId prefix ID which can be used with
-   * removeRegisteredPrefix.
-   * @throws IOException For I/O error in sending the registration request.
-   */
   @Override
-  public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
-          ForwardingFlags flags) throws IOException, net.named_data.jndn.security.SecurityException {
-    return registerPrefix(prefix, onInterest, onRegisterFailed, flags,
-            WireFormat.getDefaultWireFormat());
+  public long registerPrefix(Name prefix, OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed, ForwardingFlags flags, WireFormat wireFormat) throws IOException, SecurityException {
+    // since we don't send an Interest, ensure the transport is connected
+    if (!getTransport().getIsConnected()) {
+      getTransport().connect(node_.getConnectionInfo(), node_);
+    }
+
+    lastRegisteredId++;
+    handlerMap.put(lastRegisteredId, new MockOnInterestHandler(prefix, onInterest, flags));
+    return lastRegisteredId;
   }
 
-  /**
-   * Register prefix with the connected NDN hub and call onInterest when a
-   * matching interest is received. Use default ForwardingFlags.
-   *
-   * @param prefix A Name for the prefix to register. This copies the Name.
-   * @param onInterest When an interest is received which matches the name
-   * prefix, this calls onInterest.onInterest(prefix, interest, transport,
-   * registeredPrefixId). NOTE: You must not change the prefix object - if you
-   * need to change it then make a copy.
-   * @param onRegisterFailed If register prefix fails for any reason, this calls
-   * onRegisterFailed.onRegisterFailed(prefix).
-   * @param wireFormat A WireFormat object used to encode the message.
-   * @return The lastRegisteredId prefix ID which can be used with
-   * removeRegisteredPrefix.
-   * @throws IOException For I/O error in sending the registration request.
-   * @throws SecurityException If signing a command interest for NFD and cannot
-   * find the private key for the certificateName.
-   */
-  @Override
-  public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
-          WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
-    return registerPrefix(prefix, onInterest, onRegisterFailed, new ForwardingFlags(), wireFormat);
-  }
-
-  /**
-   * Register prefix with the connected NDN hub and call onInterest when a
-   * matching interest is received. This uses the default
-   * WireFormat.getDefaultWireFormat(). Use default ForwardingFlags.
-   *
-   * @param prefix A Name for the prefix to register. This copies the Name.
-   * @param onInterest When an interest is received which matches the name
-   * prefix, this calls onInterest.onInterest(prefix, interest, transport,
-   * registeredPrefixId). NOTE: You must not change the prefix object - if you
-   * need to change it then make a copy.
-   * @param onRegisterFailed If register prefix fails for any reason, this calls
-   * onRegisterFailed.onRegisterFailed(prefix).
-   * @return The lastRegisteredId prefix ID which can be used with
-   * removeRegisteredPrefix.
-   * @throws IOException For I/O error in sending the registration request.
-   * @throws SecurityException If signing a command interest for NFD and cannot
-   * find the private key for the certificateName.
-   */
-  @Override
-  public long registerPrefix(Name prefix, OnInterest onInterest,
-          OnRegisterFailed onRegisterFailed) throws IOException, net.named_data.jndn.security.SecurityException {
-    return registerPrefix(prefix, onInterest, onRegisterFailed, new ForwardingFlags(),
-            WireFormat.getDefaultWireFormat());
-  }
-
-  /**
-   * Remove the lastRegisteredId prefix entry with the registeredPrefixId from
-   * the lastRegisteredId prefix table. This does not affect another
-   * lastRegisteredId prefix with a different registeredPrefixId, even if it has
-   * the same prefix name. If there is no entry with the registeredPrefixId, do
-   * nothing.
-   *
-   * @param registeredPrefixId The ID returned from registerPrefix.
-   */
-//  public void removeRegisteredPrefix(long registeredPrefixId) {
-//    handlerMap.remove(registeredPrefixId);
-//  }
   /**
    * Process any packets to receive and call callbacks such as onData,
    * onInterest or onTimeout. This returns immediately if there is no data to
@@ -610,10 +276,39 @@ public class MockFace extends Face {
     node_.processEvents();
   }
 
-  /**
-   * Shut down and disconnect this Face.
-   */
-//  public void shutdown() {
-//    node_.shutdown();
-//  }
+  @Override
+  public void removeRegisteredPrefix(long registeredPrefixId) {
+    handlerMap.remove(registeredPrefixId);
+  }
+
+  @Override
+  public long setInterestFilter(InterestFilter filter, OnInterestCallback onInterest) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public void unsetInterestFilter(long interestFilterId) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public void putData(Data data, WireFormat wireFormat) throws IOException {
+    node_.putData(data, wireFormat);
+  }
+
+  @Override
+  public void send(ByteBuffer encoding) throws IOException {
+    node_.send(encoding);
+  }
+
+  @Override
+  public boolean isLocal() throws IOException {
+    return true;
+  }
+
+  @Override
+  public void shutdown() {
+    node_.shutdown();
+  }
+
 }
