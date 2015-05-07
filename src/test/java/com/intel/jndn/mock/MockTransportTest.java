@@ -55,7 +55,7 @@ public class MockTransportTest {
     transport.respondWith(response);
 
     // express interest on the face
-    final Counter count = new Counter();
+    final TestCounter count = new TestCounter();
     face.expressInterest(new Interest(new Name("/a/b/c")), new OnData() {
       @Override
       public void onData(Interest interest, Data data) {
@@ -95,7 +95,7 @@ public class MockTransportTest {
     transport.respondWith(response2);
 
     // express interest on the face
-    final Counter count = new Counter();
+    final TestCounter count = new TestCounter();
     face.expressInterest(new Interest(new Name("/a/b/c/1")), new OnData() {
       @Override
       public void onData(Interest interest, Data data) {
@@ -117,7 +117,7 @@ public class MockTransportTest {
     // express interest again, but this time it should time out because there 
     // is no data left on the wire; the first processEvents() has already 
     // picked it up
-    final Counter count2 = new Counter();
+    final TestCounter count2 = new TestCounter();
     Interest failingInterest = new Interest(new Name("/a/b/c/2"));
     failingInterest.setInterestLifetimeMilliseconds(50);
     face.expressInterest(failingInterest, new OnData() {
@@ -145,18 +145,41 @@ public class MockTransportTest {
   }
 
   /**
-   * Count reference
+   * Test for buffer overflow exceptions
    */
-  class Counter {
+  @Test
+  public void testBufferOverflowException() throws IOException {
+    MockTransport transport = new MockTransport();
 
-    int count = 0;
+    Interest interest = buildInterest();
+    Data data = buildData();
+    assertTrue(data.wireEncode().size() > interest.wireEncode().size());
 
-    public void inc() {
-      count++;
-    }
+    transport.send(interest.wireEncode().buf());
+    transport.send(data.wireEncode().buf());
+  }
+  
+  /**
+   * Verify that processing no events does not cause errors
+   */
+  @Test
+  public void testProcessNoEvents() throws IOException, EncodingException{
+    MockFace face = new MockFace();
+    face.expressInterest((Name) null, null);
+    face.processEvents();
+    face.processEvents();
+  }
 
-    public int get() {
-      return count;
-    }
+  private Data buildData() {
+    Data data = new Data(new Name("/a/b/c/1"));
+    data.setContent(new Blob("............................................"));
+    data.getMetaInfo().setFreshnessPeriod(1000);
+    return data;
+  }
+
+  private Interest buildInterest() {
+    Interest interest = new Interest(new Name("/a/b/c"));
+    interest.setInterestLifetimeMilliseconds(50);
+    return interest;
   }
 }

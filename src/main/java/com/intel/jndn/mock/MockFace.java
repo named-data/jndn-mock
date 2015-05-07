@@ -283,12 +283,12 @@ public class MockFace extends FaceExtension {
 
   @Override
   public long setInterestFilter(InterestFilter filter, OnInterestCallback onInterest) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return node_.setInterestFilter(filter, onInterest, this);
   }
 
   @Override
   public void unsetInterestFilter(long interestFilterId) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    node_.unsetInterestFilter(interestFilterId);
   }
 
   @Override

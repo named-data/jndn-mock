@@ -37,7 +37,7 @@ public class MockTransport extends Transport {
   private static final Logger logger = Logger.getLogger(MockTransport.class.getName());
   protected boolean connected;
   protected ElementReader elementReader;
-  protected ByteBuffer buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+  private ByteBuffer buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
   protected ByteBuffer sentBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
   protected List<Data> sentDataPackets = new ArrayList<>();
   protected List<Interest> sentInterestPackets = new ArrayList<>();
@@ -215,12 +215,34 @@ public class MockTransport extends Transport {
     logger.finer(String.format("Processing buffer (position: %s, limit: %s, capacity: %s): %s", buffer.position(), buffer.limit(), buffer.capacity(), Arrays.toString(buffer.array())));
 
     // pass data up to face
-    buffer.limit(buffer.position());
-    buffer.position(0);
-    elementReader.onReceivedData(buffer);
-
+    ByteBuffer temp = copy(buffer);
+    temp.flip();
+    
     // reset buffer
     buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    
+    elementReader.onReceivedData(temp);
+  }
+  
+  /**
+   * Copy one buffer to a new buffer, preserving the source buffer's position
+   * and limit.
+   * @param source the source buffer
+   * @return a copied buffer
+   */
+  private ByteBuffer copy(ByteBuffer source){
+    ByteBuffer dest = ByteBuffer.allocate(source.capacity());
+    
+    int saveLimit = source.limit();
+    int savePosition = source.position();
+    source.flip();
+    
+    dest.put(source);
+    
+    source.limit(saveLimit);
+    source.position(savePosition);
+    
+    return dest;
   }
 
   /**

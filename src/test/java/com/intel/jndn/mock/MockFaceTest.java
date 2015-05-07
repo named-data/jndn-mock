@@ -16,10 +16,13 @@ package com.intel.jndn.mock;
 import java.io.IOException;
 import java.util.logging.Logger;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnInterest;
+import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
@@ -55,7 +58,7 @@ public class MockFaceTest {
     face.addResponse(new Name("/test/with/responses"), response);
 
     // make request
-    final Counter count = new Counter();
+    final TestCounter count = new TestCounter();
     logger.info("Express interest: /test/with/responses");
     face.expressInterest(new Interest(new Name("/test/with/responses")), new OnData() {
       @Override
@@ -103,7 +106,7 @@ public class MockFaceTest {
     }, null);
 
     // make request
-    final Counter count = new Counter();
+    final TestCounter count = new TestCounter();
     logger.info("Express interest: /test/with/responses");
     face.expressInterest(new Interest(new Name("/test/with/handlers")), new OnData() {
       @Override
@@ -123,23 +126,6 @@ public class MockFaceTest {
     assertEquals(1, count.get());
   }
 
-  // TODO add childInherit test
-  /**
-   * Count reference
-   */
-  class Counter {
-
-    int count = 0;
-
-    public void inc() {
-      count++;
-    }
-
-    public int get() {
-      return count;
-    }
-  }
-
   /**
    * Ensure registering a prefix connects the underlying transport
    *
@@ -152,5 +138,55 @@ public class MockFaceTest {
     assertFalse(face.getTransport().getIsConnected());
     face.registerPrefix(new Name("/fake/prefix"), (OnInterest) null, null);
     assertTrue(face.getTransport().getIsConnected());
+  }
+  
+  /**
+   * Test that interest filters work as expected
+   */
+  @Test
+  public void testInterestFilters() throws IOException, SecurityException, EncodingException {
+    MockFace face = new MockFace();
+    
+    final TestCounter count = new TestCounter();
+    face.setInterestFilter(new InterestFilter("/a/b"), new OnInterestCallback() {
+      @Override
+      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+        count.inc();
+      }
+    });
+    
+    face.expressInterest(new Interest(new Name("/a/b")).setInterestLifetimeMilliseconds(100), null);
+    face.processEvents();
+    
+    assertEquals(1, count.get());
+  }
+  
+  @Test
+  public void testResponseFromInsideElementReader() throws IOException, SecurityException, EncodingException{
+    MockFace face = new MockFace();
+    face.setInterestFilter(new InterestFilter("/a/b"), new OnInterestCallback() {
+      @Override
+      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+        try {
+          face.putData(new Data(interest.getName()).setContent(new Blob("......")));
+        } catch (IOException ex) {
+          fail("Failed to put data.");
+        }
+      }
+    });
+    
+    final TestCounter count = new TestCounter();
+    face.expressInterest(new Interest(new Name("/a/b/c")), new OnData() {
+      @Override
+      public void onData(Interest interest, Data data) {
+        logger.info("Data returned: " + data.getContent().toString());
+        count.inc();
+      }
+    });
+    assertEquals(0, count.get());
+    
+    face.processEvents();
+    face.processEvents(); // the second processEvents() is required because the InterestFilter sends data from within the first processEvents loop
+    assertEquals(1, count.get());
   }
 }
