@@ -130,10 +130,13 @@ public class MockTransport extends Transport {
    */
   @Override
   public void connect(Transport.ConnectionInfo connectionInfo,
-          ElementListener elementListener) throws IOException {
+          ElementListener elementListener, Runnable onConnected) throws IOException {
     logger.fine("Connecting...");
     connected = true;
     elementReader = new ElementReader(elementListener);
+    if (onConnected != null) {
+      onConnected.run();
+    }
   }
 
   /**
@@ -217,31 +220,32 @@ public class MockTransport extends Transport {
     // pass data up to face
     ByteBuffer temp = copy(buffer);
     temp.flip();
-    
+
     // reset buffer
     buffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    
+
     elementReader.onReceivedData(temp);
   }
-  
+
   /**
    * Copy one buffer to a new buffer, preserving the source buffer's position
    * and limit.
+   *
    * @param source the source buffer
    * @return a copied buffer
    */
-  private ByteBuffer copy(ByteBuffer source){
+  private ByteBuffer copy(ByteBuffer source) {
     ByteBuffer dest = ByteBuffer.allocate(source.capacity());
-    
+
     int saveLimit = source.limit();
     int savePosition = source.position();
     source.flip();
-    
+
     dest.put(source);
-    
+
     source.limit(saveLimit);
     source.position(savePosition);
-    
+
     return dest;
   }
 
@@ -264,5 +268,10 @@ public class MockTransport extends Transport {
   public void close() throws IOException {
     logger.fine("Closing...");
     connected = false;
+  }
+
+  @Override
+  public boolean isAsync() {
+    return false;
   }
 }

@@ -61,7 +61,9 @@ public class MockFace extends FaceExtension {
   private final Node node_;
   HashMap<String, Data> responseMap = new HashMap<>();
   HashMap<Long, MockOnInterestHandler> handlerMap = new HashMap<>();
-  long lastRegisteredId = 0;
+  long lastPendingInterestId = 0;
+  long lastInterestFilterId = 0;
+  long lastRegisteredPrefixId = 0;
 
   /**
    * Create a new Face to mock communication over the network; all packets are
@@ -203,7 +205,8 @@ public class MockFace extends FaceExtension {
   @Override
   public long expressInterest(Interest interest, OnData onData, OnTimeout onTimeout,
           WireFormat wireFormat) throws IOException {
-    long id = node_.expressInterest(interest, onData, onTimeout, wireFormat);
+    long id = lastPendingInterestId++;
+    node_.expressInterest(id, interest, onData, onTimeout, wireFormat, this);
     handleIncomingRequests(interest);
     return id;
   }
@@ -227,8 +230,8 @@ public class MockFace extends FaceExtension {
    * @param flags The flags for finer control of which interests are forwarded
    * to the application.
    * @param wireFormat A WireFormat object used to encode the message.
-   * @return The lastRegisteredId prefix ID which can be used with
-   * removeRegisteredPrefix.
+   * @return The lastRegisteredPrefixId prefix ID which can be used with
+ removeRegisteredPrefix.
    * @throws IOException For I/O error in sending the registration request.
    * @throws SecurityException If signing a command interest for NFD and cannot
    * find the private key for the certificateName.
@@ -238,24 +241,24 @@ public class MockFace extends FaceExtension {
           ForwardingFlags flags, WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
     // since we don't send an Interest, ensure the transport is connected
     if (!getTransport().getIsConnected()) {
-      getTransport().connect(node_.getConnectionInfo(), node_);
+      getTransport().connect(node_.getConnectionInfo(), node_, null);
     }
 
-    lastRegisteredId++;
-    handlerMap.put(lastRegisteredId, new MockOnInterestHandler(prefix, onInterest, flags));
-    return lastRegisteredId;
+    lastRegisteredPrefixId++;
+    handlerMap.put(lastRegisteredPrefixId, new MockOnInterestHandler(prefix, onInterest, flags));
+    return lastRegisteredPrefixId;
   }
 
   @Override
   public long registerPrefix(Name prefix, OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed, ForwardingFlags flags, WireFormat wireFormat) throws IOException, SecurityException {
     // since we don't send an Interest, ensure the transport is connected
     if (!getTransport().getIsConnected()) {
-      getTransport().connect(node_.getConnectionInfo(), node_);
+      getTransport().connect(node_.getConnectionInfo(), node_, null);
     }
 
-    lastRegisteredId++;
-    handlerMap.put(lastRegisteredId, new MockOnInterestHandler(prefix, onInterest, flags));
-    return lastRegisteredId;
+    lastRegisteredPrefixId++;
+    handlerMap.put(lastRegisteredPrefixId, new MockOnInterestHandler(prefix, onInterest, flags));
+    return lastRegisteredPrefixId;
   }
 
   /**
@@ -283,7 +286,9 @@ public class MockFace extends FaceExtension {
 
   @Override
   public long setInterestFilter(InterestFilter filter, OnInterestCallback onInterest) {
-    return node_.setInterestFilter(filter, onInterest, this);
+    long id = lastInterestFilterId++;
+    node_.setInterestFilter(id, filter, onInterest, this);
+    return id;
   }
 
   @Override
