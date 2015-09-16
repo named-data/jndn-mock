@@ -75,6 +75,9 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
           </plugin>
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
