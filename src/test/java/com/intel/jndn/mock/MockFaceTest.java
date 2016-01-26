@@ -19,168 +19,230 @@ import java.util.logging.Logger;
 import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
+import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
  * Test MockFace functionality
- *
- * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class MockFaceTest {
+  @Before
+  public void setup() throws SecurityException {
+    face = new MockFace();
+    counter = 0;
+    recvData = null;
+    isTimeout = false;
+    exception = null;
+  }
 
-  /**
-   * Setup logging
-   */
-  private static final Logger logger = Logger.getLogger(MockFaceTest.class.getName());
+  /////////////////////////////////////////////////////////////////////////////
 
-  /**
-   * Test setting responses for specific names
-   *
-   * @throws java.io.IOException
-   * @throws net.named_data.jndn.encoding.EncodingException
-   */
   @Test
-  public void testWithResponses() throws IOException, EncodingException {
-    MockFace face = new MockFace();
+  public void ExpressInterest() throws IOException, EncodingException, InterruptedException {
+    // make request
+    expressInterest("/test/with/responses");
 
-    // add response
+    run(2);
+
+    // add response (after face is connectd)
     Data response = new Data(new Name("/test/with/responses"));
     response.setContent(new Blob("..."));
-    face.addResponse(new Name("/test/with/responses"), response);
+    face.receive(response);
 
-    // make request
-    final TestCounter count = new TestCounter();
-    logger.info("Express interest: /test/with/responses");
-    face.expressInterest(new Interest(new Name("/test/with/responses")), new OnData() {
-      @Override
-      public void onData(Interest interest, Data data) {
-        count.inc();
-        logger.fine("Received data");
-        assertEquals(data.getContent().buf(), new Blob("...").buf());
-      }
-    });
+    run(20);
 
-    // process face until a response is received
-    int allowedLoops = 100;
-    while (count.get() == 0 && allowedLoops > 0) {
-      allowedLoops--;
-      face.processEvents();
-    }
-    assertEquals(1, count.get());
+    assertNotEquals(recvData, null);
+    assertEquals(isTimeout, false);
+    assertEquals(recvData.getName().toString(), "/test/with/responses");
+    assertEquals(recvData.getContent().buf(), new Blob("...").buf());
   }
 
-  /**
-   * Test serving data dynamically with OnInterest handlers
-   *
-   * @throws net.named_data.jndn.encoding.EncodingException
-   * @throws java.io.IOException
-   * @throws net.named_data.jndn.security.SecurityException
-   */
   @Test
-  public void testWithHandlers() throws EncodingException, IOException, net.named_data.jndn.security.SecurityException {
-    MockFace face = new MockFace();
+  public void ExpressInterest2() throws IOException, EncodingException, InterruptedException {
+    // add response (before face is connected)
+    Data response = new Data(new Name("/test/with/responses"));
+    response.setContent(new Blob("..."));
+    face.receive(response);
 
-    // add interest handler
-    logger.info("Register prefix: /test/with/responses");
-    face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
-      @Override
-      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        logger.fine("Received interest, responding: " + interest.getName().toUri());
-        Data response = new Data(new Name("/test/with/handlers"));
-        response.setContent(new Blob("..."));
-        try {
-          face.putData(response);
-        } catch (IOException e) {
-          fail("Failed to send encoded data packet.");
+    // make request
+    expressInterest("/test/with/responses");
+
+    run(20);
+
+    assertNotEquals(recvData, null);
+    assertEquals(isTimeout, false);
+    assertEquals(recvData.getName().toString(), "/test/with/responses");
+    assertEquals(recvData.getContent().buf(), new Blob("...").buf());
+  }
+
+  @Test
+  public void ExpressInterestTimeout() throws IOException, EncodingException, InterruptedException {
+    // make request
+    expressInterest("/some/name");
+
+    run(20);
+
+    assertEquals(recvData, null);
+    assertEquals(isTimeout, true);
+  }
+
+  @Test
+  public void RegisterPrefix() throws IOException, SecurityException, EncodingException, InterruptedException {
+    class State {
+      boolean regFailed = false;
+      boolean regSucceed = false;
+    }
+    final State state = new State();
+
+    logger.info("Register prefix: /test/with/handlers");
+    face.registerPrefix(new Name("/test/with/handlers"),
+      new OnInterestCallback() {
+        @Override
+        public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+          logger.info("Received interest, responding: " + interest.getName().toUri());
+          Data response = new Data(new Name("/test/with/handlers"));
+          response.setContent(new Blob("..."));
+          try {
+            face.putData(response);
+          } catch (IOException e) {
+            exception = e;
+          }
+          counter++;
+        }
+      },
+      new OnRegisterFailed() {
+        @Override
+        public void onRegisterFailed(Name prefix) {
+          logger.info("Prefix registration fails: " + prefix);
+          state.regFailed = true;
+          counter++;
+        }
+      },
+      new OnRegisterSuccess() {
+        @Override
+        public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
+          logger.info("Prefix registration succeed: " + prefix);
+          state.regSucceed = true;
+          counter++;
         }
       }
-    }, null);
+    );
+
+    run(100, 1);
+    assertTrue(state.regSucceed);
+    assertFalse(state.regFailed);
 
     // make request
-    final TestCounter count = new TestCounter();
-    logger.info("Express interest: /test/with/responses");
-    face.expressInterest(new Interest(new Name("/test/with/handlers")), new OnData() {
-      @Override
-      public void onData(Interest interest, Data data) {
-        count.inc();
-        logger.fine("Received data");
-        assertEquals(data.getContent().buf(), new Blob("...").buf());
-      }
-    });
+    face.receive(new Interest(new Name("/test/with/handlers")));
 
-    // process faces until a response is received
-    int allowedLoops = 100;
-    while (count.get() == 0 && allowedLoops > 0) {
-      allowedLoops--;
-      face.processEvents();
-    }
-    assertEquals(1, count.get());
+    run(100, 2);
+
+    assertNull(exception);
+
+    assertEquals(face.sentData.size(), 1);
+    assertFalse(isTimeout);
+    assertEquals("/test/with/handlers", face.sentData.get(0).getName().toString());
+    assertEquals(new Blob("...").buf(), face.sentData.get(0).getContent().buf());
   }
 
-  /**
-   * Ensure registering a prefix connects the underlying transport
-   *
-   * @throws IOException
-   * @throws SecurityException
-   */
   @Test
-  public void testRegistrationConnectsTransport() throws IOException, SecurityException {
-    MockFace face = new MockFace();
+  public void RegistrationPrefixConnectTransport() throws IOException, SecurityException {
     assertFalse(face.getTransport().getIsConnected());
-    face.registerPrefix(new Name("/fake/prefix"), (OnInterest) null, null);
+    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, (OnRegisterFailed) null,
+      (OnRegisterSuccess) null);
     assertTrue(face.getTransport().getIsConnected());
   }
-  
-  /**
-   * Test that interest filters work as expected
-   */
+
   @Test
-  public void testInterestFilters() throws IOException, SecurityException, EncodingException {
-    MockFace face = new MockFace();
-    
-    final TestCounter count = new TestCounter();
-    face.setInterestFilter(new InterestFilter("/a/b"), new OnInterestCallback() {
+  public void SetInterestFilter() throws IOException, SecurityException, EncodingException, InterruptedException {
+    class State {
+      boolean regFailed = false;
+      boolean regSucceed = false;
+    }
+    final State state = new State();
+
+    // connect transport
+    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, new OnRegisterFailed() {
       @Override
-      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        count.inc();
+      public void onRegisterFailed(Name prefix) {
+        state.regFailed = true;
+        counter++;
+      }
+    }, new OnRegisterSuccess() {
+      @Override
+      public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
+        state.regSucceed = true;
+        counter++;
       }
     });
-    
-    face.expressInterest(new Interest(new Name("/a/b")).setInterestLifetimeMilliseconds(100), null);
-    face.processEvents();
-    
-    assertEquals(1, count.get());
-  }
-  
-  @Test
-  public void testResponseFromInsideElementReader() throws IOException, SecurityException, EncodingException{
-    MockFace face = new MockFace();
+
+    // set filter
     face.setInterestFilter(new InterestFilter("/a/b"), new OnInterestCallback() {
       @Override
       public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        try {
-          face.putData(new Data(interest.getName()).setContent(new Blob("......")));
-        } catch (IOException ex) {
-          fail("Failed to put data.");
+        counter++;
+      }
+    });
+
+    face.receive(new Interest(new Name("/a/b")).setInterestLifetimeMilliseconds(100));
+
+    run(10, 2);
+
+    assertEquals(2, counter);
+    assertTrue(state.regSucceed);
+    assertFalse(state.regFailed);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  private void
+  run(int limit, int maxCounter) throws IOException, EncodingException, InterruptedException {
+    // process face until a response is received
+    int allowedLoops = limit;
+    while (counter < maxCounter && allowedLoops > 0) {
+      allowedLoops--;
+      face.processEvents();
+      Thread.sleep(100);
+    }
+  }
+  
+  private void
+  run(int limit) throws IOException, EncodingException, InterruptedException {
+    run(limit, 1);
+  }
+
+  private void
+  expressInterest(String name) throws IOException {
+    logger.info("Express interest: " + name);
+    face.expressInterest(new Interest(new Name(name)).setInterestLifetimeMilliseconds(1000), new
+        OnData() {
+          @Override
+          public void onData(Interest interest, Data data) {
+            counter++;
+            logger.fine("Received data");
+            recvData = data;
+          }
+        },
+      new OnTimeout() {
+        @Override
+        public void onTimeout(Interest interest) {
+          logger.fine("Received timeout");
+          counter++;
+          isTimeout = true;
         }
-      }
-    });
-    
-    final TestCounter count = new TestCounter();
-    face.expressInterest(new Interest(new Name("/a/b/c")), new OnData() {
-      @Override
-      public void onData(Interest interest, Data data) {
-        logger.info("Data returned: " + data.getContent().toString());
-        count.inc();
-      }
-    });
-    assertEquals(0, count.get());
-    
-    face.processEvents();
-    face.processEvents(); // the second processEvents() is required because the InterestFilter sends data from within the first processEvents loop
-    assertEquals(1, count.get());
+      });
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  private static final Logger logger = Logger.getLogger(MockFaceTest.class.getName());
+
+  private MockFace face;
+  private int counter;
+  private Data recvData = null;
+  private boolean isTimeout = false;
+  private Exception exception = null;
 }

@@ -37,7 +37,6 @@ public class MockKeyChain {
    * @throws net.named_data.jndn.security.SecurityException
    */
   public static KeyChain configure(Name name) throws net.named_data.jndn.security.SecurityException {
-    // access key chain in ~/.ndn; create if necessary 
     PrivateKeyStorage keyStorage = new MemoryPrivateKeyStorage();
     IdentityStorage identityStorage = new MemoryIdentityStorage();
     KeyChain keyChain = new KeyChain(new IdentityManager(identityStorage, keyStorage),
@@ -45,8 +44,7 @@ public class MockKeyChain {
 
     // create keys, certs if necessary
     if (!identityStorage.doesIdentityExist(name)) {
-      Name keyName = keyChain.createIdentity(name);
-      keyChain.setDefaultKeyForIdentity(keyName, name);
+      keyChain.createIdentityAndCertificate(name);
     }
 
     // set default identity
