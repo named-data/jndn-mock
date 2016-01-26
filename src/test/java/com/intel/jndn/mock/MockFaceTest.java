@@ -15,14 +15,8 @@ package com.intel.jndn.mock;
 
 import java.io.IOException;
 import java.util.logging.Logger;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.InterestFilter;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterest;
-import net.named_data.jndn.OnInterestCallback;
+
+import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
@@ -91,14 +85,14 @@ public class MockFaceTest {
 
     // add interest handler
     logger.info("Register prefix: /test/with/responses");
-    face.registerPrefix(new Name("/test/with/handlers"), new OnInterest() {
+    face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
       @Override
-      public void onInterest(Name prefix, Interest interest, Transport transport, long registeredPrefixId) {
+      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         logger.fine("Received interest, responding: " + interest.getName().toUri());
         Data response = new Data(new Name("/test/with/handlers"));
         response.setContent(new Blob("..."));
         try {
-          transport.send(response.wireEncode().buf());
+          face.putData(response);
         } catch (IOException e) {
           fail("Failed to send encoded data packet.");
         }

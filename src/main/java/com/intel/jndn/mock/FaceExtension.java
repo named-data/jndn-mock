@@ -15,17 +15,8 @@ package com.intel.jndn.mock;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.ForwardingFlags;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.InterestFilter;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterest;
-import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnTimeout;
+
+import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.util.Blob;
@@ -66,7 +57,6 @@ public abstract class FaceExtension extends Face {
 			interest.setExclude(interestTemplate.getExclude());
 			interest.setChildSelector(interestTemplate.getChildSelector());
 			interest.setMustBeFresh(interestTemplate.getMustBeFresh());
-			interest.setScope(interestTemplate.getScope());
 			interest.setInterestLifetimeMilliseconds(
 					interestTemplate.getInterestLifetimeMilliseconds());
 		} else {
@@ -77,12 +67,9 @@ public abstract class FaceExtension extends Face {
 	}
 
 	public abstract long registerPrefix(Name prefix,
-			OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed, ForwardingFlags flags,
-			WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException;
-
-	public abstract long registerPrefix(Name prefix, final OnInterest onInterest,
-			OnRegisterFailed onRegisterFailed, ForwardingFlags flags,
-			WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException;
+																			OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed,
+																			OnRegisterSuccess onRegisterSuccess, ForwardingFlags flags,
+																			WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException;
 
 	public abstract void removeRegisteredPrefix(long registeredPrefixId);
 

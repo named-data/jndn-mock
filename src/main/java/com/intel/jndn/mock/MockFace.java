@@ -18,22 +18,11 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
-import net.named_data.jndn.ForwardingFlags;
-import net.named_data.jndn.Interest;
-import net.named_data.jndn.InterestFilter;
-import net.named_data.jndn.Name;
-import net.named_data.jndn.Node;
-import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterest;
-import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnTimeout;
+
+import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.transport.Transport;
 
 /**
  * <p>
@@ -59,8 +48,8 @@ public class MockFace extends FaceExtension {
 
   private static final Logger logger = Logger.getLogger(MockFace.class.getName());
   private final Node node_;
-  HashMap<String, Data> responseMap = new HashMap<>();
-  HashMap<Long, MockOnInterestHandler> handlerMap = new HashMap<>();
+  HashMap<String, Data> responseMap = new HashMap<String, Data>();
+  HashMap<Long, MockOnInterestHandler> handlerMap = new HashMap<Long, MockOnInterestHandler>();
   long lastPendingInterestId = 0;
   long lastInterestFilterId = 0;
   long lastRegisteredPrefixId = 0;
@@ -237,20 +226,10 @@ public class MockFace extends FaceExtension {
    * find the private key for the certificateName.
    */
   @Override
-  public long registerPrefix(Name prefix, OnInterest onInterest, OnRegisterFailed onRegisterFailed,
-          ForwardingFlags flags, WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
-    // since we don't send an Interest, ensure the transport is connected
-    if (!getTransport().getIsConnected()) {
-      getTransport().connect(node_.getConnectionInfo(), node_, null);
-    }
-
-    lastRegisteredPrefixId++;
-    handlerMap.put(lastRegisteredPrefixId, new MockOnInterestHandler(prefix, onInterest, flags));
-    return lastRegisteredPrefixId;
-  }
-
-  @Override
-  public long registerPrefix(Name prefix, OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed, ForwardingFlags flags, WireFormat wireFormat) throws IOException, SecurityException {
+  public long registerPrefix(Name prefix,
+                             OnInterestCallback onInterest, OnRegisterFailed onRegisterFailed,
+                             OnRegisterSuccess onRegisterSuccess, ForwardingFlags flags,
+                             WireFormat wireFormat) throws IOException, net.named_data.jndn.security.SecurityException {
     // since we don't send an Interest, ensure the transport is connected
     if (!getTransport().getIsConnected()) {
       getTransport().connect(node_.getConnectionInfo(), node_, null);
