@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
  * Test MockFace functionality
  */
 public class MockFaceTest {
+
   @Before
   public void setup() throws SecurityException {
     face = new MockFace();
@@ -38,10 +39,8 @@ public class MockFaceTest {
     exception = null;
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-
   @Test
-  public void ExpressInterest() throws IOException, EncodingException, InterruptedException {
+  public void testExpressingAnInterest() throws IOException, EncodingException, InterruptedException {
     // make request
     expressInterest("/test/with/responses");
 
@@ -54,14 +53,14 @@ public class MockFaceTest {
 
     run(20);
 
-    assertNotEquals(recvData, null);
+    assertNotNull(recvData);
     assertEquals(isTimeout, false);
     assertEquals(recvData.getName().toString(), "/test/with/responses");
     assertEquals(recvData.getContent().buf(), new Blob("...").buf());
   }
 
   @Test
-  public void ExpressInterest2() throws IOException, EncodingException, InterruptedException {
+  public void testExpressingAnInterestAfterConfiguration() throws IOException, EncodingException, InterruptedException {
     // add response (before face is connected)
     Data response = new Data(new Name("/test/with/responses"));
     response.setContent(new Blob("..."));
@@ -72,14 +71,14 @@ public class MockFaceTest {
 
     run(20);
 
-    assertNotEquals(recvData, null);
+    assertNotNull(recvData);
     assertEquals(isTimeout, false);
     assertEquals(recvData.getName().toString(), "/test/with/responses");
     assertEquals(recvData.getContent().buf(), new Blob("...").buf());
   }
 
   @Test
-  public void ExpressInterestTimeout() throws IOException, EncodingException, InterruptedException {
+  public void testInterestTimeouts() throws IOException, EncodingException, InterruptedException {
     // make request
     expressInterest("/some/name");
 
@@ -90,7 +89,7 @@ public class MockFaceTest {
   }
 
   @Test
-  public void RegisterPrefix() throws IOException, SecurityException, EncodingException, InterruptedException {
+  public void testPrefixRegistration() throws IOException, SecurityException, EncodingException, InterruptedException {
     class State {
       boolean regFailed = false;
       boolean regSucceed = false;
@@ -98,38 +97,34 @@ public class MockFaceTest {
     final State state = new State();
 
     logger.info("Register prefix: /test/with/handlers");
-    face.registerPrefix(new Name("/test/with/handlers"),
-      new OnInterestCallback() {
-        @Override
-        public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-          logger.info("Received interest, responding: " + interest.getName().toUri());
-          Data response = new Data(new Name("/test/with/handlers"));
-          response.setContent(new Blob("..."));
-          try {
-            face.putData(response);
-          } catch (IOException e) {
-            exception = e;
-          }
-          counter++;
+    face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
+      @Override
+      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+        logger.info("Received interest, responding: " + interest.getName().toUri());
+        Data response = new Data(new Name("/test/with/handlers"));
+        response.setContent(new Blob("..."));
+        try {
+          face.putData(response);
+        } catch (IOException e) {
+          exception = e;
         }
-      },
-      new OnRegisterFailed() {
-        @Override
-        public void onRegisterFailed(Name prefix) {
-          logger.info("Prefix registration fails: " + prefix);
-          state.regFailed = true;
-          counter++;
-        }
-      },
-      new OnRegisterSuccess() {
-        @Override
-        public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
-          logger.info("Prefix registration succeed: " + prefix);
-          state.regSucceed = true;
-          counter++;
-        }
+        counter++;
       }
-    );
+    }, new OnRegisterFailed() {
+      @Override
+      public void onRegisterFailed(Name prefix) {
+        logger.info("Prefix registration fails: " + prefix);
+        state.regFailed = true;
+        counter++;
+      }
+    }, new OnRegisterSuccess() {
+      @Override
+      public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
+        logger.info("Prefix registration succeed: " + prefix);
+        state.regSucceed = true;
+        counter++;
+      }
+    });
 
     run(100, 1);
     assertTrue(state.regSucceed);
@@ -149,15 +144,15 @@ public class MockFaceTest {
   }
 
   @Test
-  public void RegistrationPrefixConnectTransport() throws IOException, SecurityException {
+  public void testThatTransportConnectsOnPrefixRegistration() throws IOException, SecurityException {
     assertFalse(face.getTransport().getIsConnected());
     face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, (OnRegisterFailed) null,
-      (OnRegisterSuccess) null);
+            (OnRegisterSuccess) null);
     assertTrue(face.getTransport().getIsConnected());
   }
 
   @Test
-  public void SetInterestFilter() throws IOException, SecurityException, EncodingException, InterruptedException {
+  public void testInterestFilters() throws IOException, SecurityException, EncodingException, InterruptedException {
     class State {
       boolean regFailed = false;
       boolean regSucceed = false;
@@ -214,26 +209,23 @@ public class MockFaceTest {
     run(limit, 1);
   }
 
-  private void
-  expressInterest(String name) throws IOException {
+  private void expressInterest(String name) throws IOException {
     logger.info("Express interest: " + name);
-    face.expressInterest(new Interest(new Name(name)).setInterestLifetimeMilliseconds(1000), new
-        OnData() {
-          @Override
-          public void onData(Interest interest, Data data) {
-            counter++;
-            logger.fine("Received data");
-            recvData = data;
-          }
-        },
-      new OnTimeout() {
-        @Override
-        public void onTimeout(Interest interest) {
-          logger.fine("Received timeout");
-          counter++;
-          isTimeout = true;
-        }
-      });
+    face.expressInterest(new Interest(new Name(name)).setInterestLifetimeMilliseconds(1000), new OnData() {
+      @Override
+      public void onData(Interest interest, Data data) {
+        counter++;
+        logger.fine("Received data");
+        recvData = data;
+      }
+    }, new OnTimeout() {
+      @Override
+      public void onTimeout(Interest interest) {
+        logger.fine("Received timeout");
+        counter++;
+        isTimeout = true;
+      }
+    });
   }
 
   /////////////////////////////////////////////////////////////////////////////

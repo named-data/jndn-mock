@@ -23,6 +23,7 @@ import net.named_data.jndn.security.identity.PrivateKeyStorage;
 import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
 
 /**
+ * Create an in-memory key chain for use in NDN-related tests
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */

@@ -31,39 +31,51 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** A client-side face for unit testing
+/**
+ * A client-side face for unit testing
  */
-public class MockFace extends Face
-{
+public class MockFace extends Face {
+
   public interface SignalOnSendInterest {
+
     void emit(Interest interest) throws EncodingException, SecurityException;
   }
 
   public interface SignalOnSendData {
+
     void emit(Data data);
   }
 
   /**
    * Options for MockFace
    */
-  public static class Options
-  {
-    /** If true, packets sent out of MockFace will be appended to a container
+  public static class Options {
+
+    /**
+     * If true, packets sent out of MockFace will be appended to a container
      */
     boolean enablePacketLogging = false;
 
     /**
-     * If true, prefix registration command will be automatically replied with a successful response
+     * If true, prefix registration command will be automatically replied with a
+     * successful response
      */
     boolean enableRegistrationReply = false;
   }
 
-  final public static Options DEFAULT_OPTIONS = new Options(){{ enablePacketLogging=true; enableRegistrationReply=true; }};
+  final public static Options DEFAULT_OPTIONS = new Options() {
+    {
+      enablePacketLogging = true;
+      enableRegistrationReply = true;
+    }
+  };
 
   /**
-   * Create MockFace that logs packets in sentInterests and sentData and emulates NFD prefix registration
+   * Create MockFace that logs packets in sentInterests and sentData and
+   * emulates NFD prefix registration
    */
   public MockFace() throws SecurityException {
     this(DEFAULT_OPTIONS);
@@ -87,7 +99,7 @@ public class MockFace extends Face
    */
   public MockFace(Options options) throws SecurityException {
     super(new MockFaceTransport(), null);
-    m_transport = (MockFaceTransport)node_.getTransport();
+    m_transport = (MockFaceTransport) node_.getTransport();
     m_keychain = MockKeyChain.configure(new Name("/mock/key"));
     setCommandSigningInfo(m_keychain, m_keychain.getDefaultCertificateName());
 
@@ -113,8 +125,7 @@ public class MockFace extends Face
               signal.emit(data);
             }
           }
-        }
-        else {
+        } else {
           logger.info("Received an unknown packet");
         }
       }
@@ -176,6 +187,8 @@ public class MockFace extends Face
 
   /**
    * Mock reception of the Interest packet on the Face (from transport)
+   * @param interest the mock-remote interest to add to the PIT
+   * @throws EncodingException if packet encoding fails (it should not)
    */
   public void receive(Interest interest) throws EncodingException {
     m_transport.receive(interest.wireEncode().buf());
@@ -183,49 +196,63 @@ public class MockFace extends Face
 
   /**
    * Mock reception of the Data packet on the Face (from transport)
+   * @param data the mock-remote data to add to the CS
+   * @throws EncodingException if packet encoding fails (it should not)
    */
   public void receive(Data data) throws EncodingException {
     m_transport.receive(data.wireEncode().buf());
   }
 
+  /**
+   * @return the transport for this face
+   */
   public Transport getTransport() {
     return m_transport;
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
   /**
-   * Internal transport for MockFace
+   * Internal transport for {@link MockFace}
    */
   private static class MockFaceTransport extends Transport {
+
     public interface OnSendBlockSignal {
+
       void emit(ByteBuffer buffer) throws EncodingException, SecurityException;
     }
 
-    public void
-    receive(ByteBuffer block) throws EncodingException {
-      synchronized (m_recvBuffer) {
-        m_recvBuffer.add(block.duplicate());
+    /**
+     * Receive some bytes to add to the mock socket
+     * @param block the byte buffer
+     * @throws EncodingException 
+     */
+    public void receive(ByteBuffer block) throws EncodingException {
+      synchronized (receiveBuffer) {
+        receiveBuffer.add(block.duplicate());
       }
     }
 
-    // from Transport
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isLocal(ConnectionInfo connectionInfo) {
       return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isAsync() {
       return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void connect(Transport.ConnectionInfo connectionInfo,
-                        ElementListener elementListener, Runnable onConnected) {
+            ElementListener elementListener, Runnable onConnected) {
       logger.fine("Connecting...");
       connected = true;
       elementReader = new ElementReader(elementListener);
@@ -234,19 +261,25 @@ public class MockFace extends Face
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void send(ByteBuffer data) throws IOException {
-      logger.fine("Sending " + (data.capacity() - data.position()) + " bytes");
+      logger.log(Level.FINE, "Sending {0} bytes", (data.capacity() - data.position()));
 
       try {
         onSendBlock.emit(data);
       } catch (EncodingException e) {
-        logger.info("TLV decoding error: " + e.toString());
+        logger.log(Level.WARNING, "Failed to decode packet", e);
       } catch (SecurityException e) {
-        logger.info("Signing error: " + e.toString());
+        logger.log(Level.WARNING, "Failed signature", e);
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void processEvents() throws IOException, EncodingException {
       if (!getIsConnected()) {
@@ -255,9 +288,9 @@ public class MockFace extends Face
 
       while (true) {
         ByteBuffer block = null;
-        synchronized (m_recvBuffer) {
-          if (!m_recvBuffer.isEmpty()) {
-            block = m_recvBuffer.remove(0);
+        synchronized (receiveBuffer) {
+          if (!receiveBuffer.isEmpty()) {
+            block = receiveBuffer.remove(0);
           }
         }
         if (block == null) {
@@ -267,69 +300,66 @@ public class MockFace extends Face
       }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean getIsConnected() {
       return connected;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws IOException {
       logger.fine("Closing...");
       connected = false;
     }
 
-    //////////////////////////////////////////////////////////////////////////////
-
     public OnSendBlockSignal onSendBlock;
 
-    //////////////////////////////////////////////////////////////////////////////
-
     private static final Logger logger = Logger.getLogger(MockFaceTransport.class.getName());
-
     private boolean connected;
     private ElementReader elementReader;
-    private final List<ByteBuffer> m_recvBuffer = new LinkedList<ByteBuffer>();
+    private final List<ByteBuffer> receiveBuffer = new LinkedList<>();
   }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Interests sent out of this MockFace
    * <p>
-   * Sent Interests are appended to this container if options.enablePacketLogger is true.
-   * User of this class is responsible for cleaning up the container, if necessary.
-   * After .expressInterest, .processEvents must be called before the Interest would show up here.
+   * Sent Interests are appended to this container if options.enablePacketLogger
+   * is true. User of this class is responsible for cleaning up the container,
+   * if necessary. After .expressInterest, .processEvents must be called before
+   * the Interest would show up here.
    */
-  public List<Interest> sentInterests = new ArrayList<Interest>();
+  public List<Interest> sentInterests = new ArrayList<>();
 
   /**
    * Data sent out of this MockFace
    * <p>
-   * Sent Data are appended to this container if options.enablePacketLogger is true.
-   * User of this class is responsible for cleaning up the container, if necessary.
-   * After .put, .processEvents must be called before the Data would show up here.
+   * Sent Data are appended to this container if options.enablePacketLogger is
+   * true. User of this class is responsible for cleaning up the container, if
+   * necessary. After .put, .processEvents must be called before the Data would
+   * show up here.
    */
-  public List<Data> sentData = new ArrayList<Data>();
+  public List<Data> sentData = new ArrayList<>();
 
   /**
    * Emits whenever an Interest is sent
    * <p>
-   * After .expressInterest, .processEvents must be called before this signal would be emitted.
+   * After .expressInterest, .processEvents must be called before this signal
+   * would be emitted.
    */
-  public List<SignalOnSendInterest> onSendInterest = new ArrayList<SignalOnSendInterest>();
+  public List<SignalOnSendInterest> onSendInterest = new ArrayList<>();
 
   /**
    * Emits whenever a Data packet is sent
    * <p>
-   * After .putData, .processEvents must be called before this signal would be emitted.
+   * After .putData, .processEvents must be called before this signal would be
+   * emitted.
    */
-  public List<SignalOnSendData> onSendData = new ArrayList<SignalOnSendData>();
-
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
+  public List<SignalOnSendData> onSendData = new ArrayList<>();
 
   private static final Logger logger = Logger.getLogger(MockFace.class.getName());
   private MockFaceTransport m_transport;

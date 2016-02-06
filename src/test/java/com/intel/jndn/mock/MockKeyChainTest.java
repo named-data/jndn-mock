@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 
 /**
  * Test MockKeyChain
+ *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 public class MockKeyChainTest {

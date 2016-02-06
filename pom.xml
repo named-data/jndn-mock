@@ -19,6 +19,10 @@
       <name>Andrew Brown</name>
       <url>http://github.com/andrewsbrown</url>
     </developer>
+    <developer>
+      <name>Alexander Afanasyev</name>
+      <email>aa@cs.ucla.edu</email>
+    </developer>
   </developers>
   <scm>
     <url>https://github.com/01org/jndn-mock</url>
