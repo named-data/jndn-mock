@@ -33,7 +33,7 @@ import net.named_data.jndn.transport.Transport;
  */
 public class MockTransport extends Transport {
 
-  public final static int BUFFER_CAPACITY = 8000;
+  public final static int BUFFER_CAPACITY = 1024 * 1024; // allocate 1MB buffer
   private static final Logger logger = Logger.getLogger(MockTransport.class.getName());
   protected boolean connected;
   protected ElementReader elementReader;
