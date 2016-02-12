@@ -29,6 +29,10 @@ import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
  */
 public class MockKeyChain {
 
+  private MockKeyChain() {
+    // do not allow instances of this key chain
+  }
+
   /**
    * Build and configure an in-memory {@link KeyChain}.
    *

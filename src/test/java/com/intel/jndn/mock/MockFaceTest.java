@@ -193,8 +193,7 @@ public class MockFaceTest {
 
   /////////////////////////////////////////////////////////////////////////////
 
-  private void
-  run(int limit, int maxCounter) throws IOException, EncodingException, InterruptedException {
+  private void run(int limit, int maxCounter) throws IOException, EncodingException, InterruptedException {
     // process face until a response is received
     int allowedLoops = limit;
     while (counter < maxCounter && allowedLoops > 0) {
@@ -204,8 +203,7 @@ public class MockFaceTest {
     }
   }
   
-  private void
-  run(int limit) throws IOException, EncodingException, InterruptedException {
+  private void run(int limit) throws IOException, EncodingException, InterruptedException {
     run(limit, 1);
   }
 
@@ -231,7 +229,6 @@ public class MockFaceTest {
   /////////////////////////////////////////////////////////////////////////////
 
   private static final Logger logger = Logger.getLogger(MockFaceTest.class.getName());
-
   private MockFace face;
   private int counter;
   private Data recvData = null;
