@@ -5,6 +5,11 @@ buildscript {
   }
 }
 
+plugins {
+  id "org.sonarqube" version "1.2"
+  id 'net.saliman.cobertura' version '2.3.0'
+}
+
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -25,6 +30,7 @@ repositories {
 dependencies {
   compile 'net.named-data:jndn:0.10'
   testCompile 'junit:junit:4.12'
+  testRuntime 'org.slf4j:slf4j-api:1.7.16'
 }
 
 task javadocJar(type: Jar) {
@@ -119,4 +125,8 @@ uploadArchives {
       }
     }
   }
+}
+
+cobertura {
+  coverageFormats = ['html', 'xml']
 }
