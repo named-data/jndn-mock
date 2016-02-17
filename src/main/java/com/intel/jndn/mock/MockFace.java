@@ -18,11 +18,9 @@ import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.TlvWireFormat;
 import net.named_data.jndn.encoding.tlv.Tlv;
 import net.named_data.jndn.encoding.tlv.TlvDecoder;
-import net.named_data.jndn.encoding.tlv.TlvEncoder;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
-import net.named_data.jndn.util.Blob;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -194,18 +192,14 @@ public class MockFace extends Face {
         params.setCost(0);
       }
 
-      // TODO: replace with jNDN ControlResponse encoding when available
-      // http://redmine.named-data.net/issues/3455
-      TlvEncoder encoder = new TlvEncoder(256);
-      int saveLength = encoder.getLength();
-      encoder.writeBuffer(params.wireEncode().buf());
-      encoder.writeBlobTlv(Tlv.NfdCommand_StatusText, new Blob("OK").buf());
-      encoder.writeNonNegativeIntegerTlv(Tlv.NfdCommand_StatusCode, 200);
-      encoder.writeTypeAndLength(Tlv.NfdCommand_ControlResponse, encoder.getLength() - saveLength);
+      ControlResponse response = new ControlResponse();
+      response.setStatusCode(200);
+      response.setStatusText("OK");
+      response.setBodyAsControlParameters(params);
 
       Data data = new Data();
       data.setName(interest.getName());
-      data.setContent(new Blob(encoder.getOutput(), false));
+      data.setContent(response.wireEncode());
       keyChain.sign(data);
 
       receive(data);

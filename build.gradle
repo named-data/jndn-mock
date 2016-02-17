@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-  compile 'net.named-data:jndn:0.9'
+  compile 'net.named-data:jndn:0.10'
   testCompile 'junit:junit:4.12'
 }
 
