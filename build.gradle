@@ -10,7 +10,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'com.intel.jndn.mock'
-version = '1.0.0'
+version = '1.0.1'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
