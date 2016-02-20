@@ -198,7 +198,7 @@ public class MockFace extends Face {
       throw new Error(ex);
     }
 
-    if (options.enablePacketLogging) {
+    if (options.isEnablePacketLogging()) {
       onSendInterest.add(new SignalOnSendInterest() {
         @Override
         public void emit(final Interest interest) {
@@ -214,7 +214,7 @@ public class MockFace extends Face {
       });
     }
 
-    if (options.enableRegistrationReply) {
+    if (options.isEnableRegistrationReply()) {
       onSendInterest.add(new OnPrefixRegistration());
     }
   }

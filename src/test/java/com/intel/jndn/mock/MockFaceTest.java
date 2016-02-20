@@ -214,6 +214,63 @@ public class MockFaceTest {
     assertFalse(state.regFailed);
   }
 
+  @Test
+  public void testMockWithoutPacketLogging() throws Exception {
+    face = new MockFace(new MockFace.Options().setEnablePacketLogging(false));
+
+    // make request
+    expressInterest("/test/with/responses");
+    run(2);
+
+    assertEquals(0, face.sentInterests.size());
+  }
+
+  @Test
+  public void testMockWithoutMockRegistrationReply() throws Exception {
+    face = new MockFace(new MockFace.Options().setEnableRegistrationReply(false));
+
+    class State {
+      boolean regFailed = false;
+      boolean regSucceed = false;
+    }
+    final State state = new State();
+
+    LOG.info("Register prefix: /test/with/handlers");
+    face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
+      @Override
+      public void onInterest(final Name prefix, final Interest interest, final Face face, final long interestFilterId,
+                             final InterestFilter filter) {
+        LOG.info("Received interest, responding: " + interest.getName().toUri());
+        Data response = new Data(new Name("/test/with/handlers"));
+        response.setContent(new Blob("..."));
+        try {
+          face.putData(response);
+        } catch (IOException e) {
+          exception = e;
+        }
+        counter++;
+      }
+    }, new OnRegisterFailed() {
+      @Override
+      public void onRegisterFailed(final Name prefix) {
+        LOG.info("Prefix registration fails: " + prefix);
+        state.regFailed = true;
+        counter++;
+      }
+    }, new OnRegisterSuccess() {
+      @Override
+      public void onRegisterSuccess(final Name prefix, final long registeredPrefixId) {
+        LOG.info("Prefix registration succeed: " + prefix);
+        state.regSucceed = true;
+        counter++;
+      }
+    });
+
+    run(100, 1);
+    assertFalse(state.regSucceed);
+    assertTrue(state.regFailed);
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   private void run(final int limit, final int maxCounter) throws IOException, EncodingException, InterruptedException {
