@@ -13,7 +13,12 @@
  */
 package com.intel.jndn.mock;
 
-import net.named_data.jndn.*;
+import net.named_data.jndn.ControlParameters;
+import net.named_data.jndn.ControlResponse;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.Name;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.TlvWireFormat;
 import net.named_data.jndn.encoding.tlv.Tlv;
@@ -54,28 +59,47 @@ public class MockFace extends Face {
    * Options for MockFace
    */
   public static class Options {
+    private boolean enablePacketLogging = false;
+    private boolean enableRegistrationReply = false;
+
+    public boolean isEnablePacketLogging() {
+      return enablePacketLogging;
+    }
 
     /**
-     * If true, packets sent out of MockFace will be appended to a container
+     * Enable/disable packet logging
+     *
+     * @param enablePacketLogging If true, packets sent out of MockFace will be appended to a container
+     * @return this
      */
-    boolean enablePacketLogging = false;
+    public Options setEnablePacketLogging(boolean enablePacketLogging) {
+      this.enablePacketLogging = enablePacketLogging;
+      return this;
+    }
+
+    public boolean isEnableRegistrationReply() {
+      return enableRegistrationReply;
+    }
 
     /**
-     * If true, prefix registration command will be automatically replied with a
-     * successful response
+     * Enable/disable prefix registration mocking
+     *
+     * @param enableRegistrationReply If true, prefix registration command will be automatically replied with a
+     *                                successful response
+     * @return this
      */
-    boolean enableRegistrationReply = false;
+    public Options setEnableRegistrationReply(boolean enableRegistrationReply) {
+      this.enableRegistrationReply = enableRegistrationReply;
+      return this;
+    }
   }
 
   /**
    * Default options
    */
-  public static final Options DEFAULT_OPTIONS = new Options() {
-    {
-      enablePacketLogging = true;
-      enableRegistrationReply = true;
-    }
-  };
+  public static final Options DEFAULT_OPTIONS = new Options()
+                                                  .setEnablePacketLogging(true)
+                                                  .setEnableRegistrationReply(true);
 
   /**
    * Create MockFace that logs packets in {@link #sentInterests} and
