@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 import net.named_data.jndn.encoding.ElementListener;
 import net.named_data.jndn.encoding.ElementReader;
 import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
 
 /**
@@ -33,21 +32,32 @@ import net.named_data.jndn.transport.Transport;
  * @author Andrew Brown <andrew.brown@intel.com>
  */
 class MockFaceTransport extends Transport {
+  private OnSendBlockSignal onSendBlock;
+  private static final Logger LOGGER = Logger.getLogger(MockFaceTransport.class.getName());
+  private boolean connected;
+  private ElementReader elementReader;
+  private final List<ByteBuffer> receiveBuffer = new LinkedList<>();
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /**
-   * API for buffer handling
+   * API for buffer handling.
    */
   public interface OnSendBlockSignal {
-    void emit(ByteBuffer buffer) throws EncodingException, SecurityException;
+    /**
+     * Callback called when an ByteBuffer is sent (from NFD towards app).
+     *
+     * @param buffer buffer being sent thourgh face (from NFD towards app)
+     */
+    void emit(ByteBuffer buffer);
   }
 
   /**
-   * Receive some bytes to add to the mock socket
+   * Receive some bytes to add to the mock socket.
    *
    * @param block the byte buffer
-   * @throws EncodingException
    */
-  public void receive(ByteBuffer block) throws EncodingException {
+  public void receive(final ByteBuffer block) {
     synchronized (receiveBuffer) {
       receiveBuffer.add(block.duplicate());
     }
@@ -57,7 +67,7 @@ class MockFaceTransport extends Transport {
    * {@inheritDoc}
    */
   @Override
-  public boolean isLocal(Transport.ConnectionInfo connectionInfo) {
+  public boolean isLocal(final Transport.ConnectionInfo connectionInfo) {
     return true;
   }
 
@@ -73,8 +83,8 @@ class MockFaceTransport extends Transport {
    * {@inheritDoc}
    */
   @Override
-  public void connect(Transport.ConnectionInfo connectionInfo,
-          ElementListener elementListener, Runnable onConnected) {
+  public void connect(final Transport.ConnectionInfo connectionInfo,
+                      final ElementListener elementListener, final Runnable onConnected) {
     LOGGER.fine("Connecting...");
     connected = true;
     elementReader = new ElementReader(elementListener);
@@ -87,16 +97,10 @@ class MockFaceTransport extends Transport {
    * {@inheritDoc}
    */
   @Override
-  public void send(ByteBuffer data) throws IOException {
-    LOGGER.log(Level.FINE, "Sending {0} bytes", data.capacity() - data.position());
+  public void send(final ByteBuffer buffer) throws IOException {
+    LOGGER.log(Level.FINE, "Sending {0} bytes", buffer.capacity() - buffer.position());
 
-    try {
-      onSendBlock.emit(data);
-    } catch (EncodingException e) {
-      LOGGER.log(Level.WARNING, "Failed to decode packet", e);
-    } catch (SecurityException e) {
-      LOGGER.log(Level.WARNING, "Failed signature", e);
-    }
+    onSendBlock.emit(buffer);
   }
 
   /**
@@ -144,13 +148,7 @@ class MockFaceTransport extends Transport {
    * ideally this would be hidden completely but the super() call in MockFace
    * requires this callback to be set after the parent constructor is called
    */
-  public void setOnSendBlock(OnSendBlockSignal onSendBlock) {
+  public void setOnSendBlock(final OnSendBlockSignal onSendBlock) {
     this.onSendBlock = onSendBlock;
   }
-
-  private OnSendBlockSignal onSendBlock;
-  private static final Logger LOGGER = Logger.getLogger(MockFaceTransport.class.getName());
-  private boolean connected;
-  private ElementReader elementReader;
-  private final List<ByteBuffer> receiveBuffer = new LinkedList<>();
 }

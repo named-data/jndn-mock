@@ -21,16 +21,18 @@ import net.named_data.jndn.security.identity.MemoryIdentityStorage;
 import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
 import net.named_data.jndn.security.identity.PrivateKeyStorage;
 import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
+import net.named_data.jndn.security.SecurityException;
 
 /**
- * Create an in-memory key chain for use in NDN-related tests
+ * Create an in-memory key chain for use in NDN-related tests.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-public class MockKeyChain {
-
+public final class MockKeyChain {
+  /**
+   * Do not allow instances of this key chain.
+   */
   private MockKeyChain() {
-    // do not allow instances of this key chain
   }
 
   /**
@@ -39,9 +41,9 @@ public class MockKeyChain {
    * @param name the name of the default identity to create
    * @return an in-memory {@link KeyChain} configured with the name as the
    * default identity
-   * @throws net.named_data.jndn.security.SecurityException
+   * @throws SecurityException if failed to create mock identity
    */
-  public static KeyChain configure(Name name) throws net.named_data.jndn.security.SecurityException {
+  public static KeyChain configure(final Name name) throws SecurityException {
     PrivateKeyStorage keyStorage = new MemoryPrivateKeyStorage();
     IdentityStorage identityStorage = new MemoryIdentityStorage();
     KeyChain keyChain = new KeyChain(new IdentityManager(identityStorage, keyStorage),
