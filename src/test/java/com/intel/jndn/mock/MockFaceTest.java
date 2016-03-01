@@ -13,22 +13,43 @@
  */
 package com.intel.jndn.mock;
 
-import java.io.IOException;
-import java.util.logging.Logger;
-
-import net.named_data.jndn.*;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnInterestCallback;
+import net.named_data.jndn.OnRegisterFailed;
+import net.named_data.jndn.OnRegisterSuccess;
+import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.util.Blob;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Test MockFace functionality
+ * Test MockFace functionality.
  */
 public class MockFaceTest {
+  private static final Logger LOG = Logger.getLogger(MockFaceTest.class.getName());
+  private MockFace face;
+  private int counter;
+  private Data recvData = null;
+  private boolean isTimeout = false;
+  private Exception exception = null;
+
+  /////////////////////////////////////////////////////////////////////////////
 
   @Before
   public void setup() throws SecurityException {
@@ -96,11 +117,12 @@ public class MockFaceTest {
     }
     final State state = new State();
 
-    logger.info("Register prefix: /test/with/handlers");
+    LOG.info("Register prefix: /test/with/handlers");
     face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
       @Override
-      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        logger.info("Received interest, responding: " + interest.getName().toUri());
+      public void onInterest(final Name prefix, final Interest interest, final Face face, final long interestFilterId,
+                             final InterestFilter filter) {
+        LOG.info("Received interest, responding: " + interest.getName().toUri());
         Data response = new Data(new Name("/test/with/handlers"));
         response.setContent(new Blob("..."));
         try {
@@ -112,15 +134,15 @@ public class MockFaceTest {
       }
     }, new OnRegisterFailed() {
       @Override
-      public void onRegisterFailed(Name prefix) {
-        logger.info("Prefix registration fails: " + prefix);
+      public void onRegisterFailed(final Name prefix) {
+        LOG.info("Prefix registration fails: " + prefix);
         state.regFailed = true;
         counter++;
       }
     }, new OnRegisterSuccess() {
       @Override
-      public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
-        logger.info("Prefix registration succeed: " + prefix);
+      public void onRegisterSuccess(final Name prefix, final long registeredPrefixId) {
+        LOG.info("Prefix registration succeed: " + prefix);
         state.regSucceed = true;
         counter++;
       }
@@ -162,13 +184,13 @@ public class MockFaceTest {
     // connect transport
     face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, new OnRegisterFailed() {
       @Override
-      public void onRegisterFailed(Name prefix) {
+      public void onRegisterFailed(final Name prefix) {
         state.regFailed = true;
         counter++;
       }
     }, new OnRegisterSuccess() {
       @Override
-      public void onRegisterSuccess(Name prefix, long registeredPrefixId) {
+      public void onRegisterSuccess(final Name prefix, final long registeredPrefixId) {
         state.regSucceed = true;
         counter++;
       }
@@ -177,7 +199,8 @@ public class MockFaceTest {
     // set filter
     face.setInterestFilter(new InterestFilter("/a/b"), new OnInterestCallback() {
       @Override
-      public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+      public void onInterest(final Name prefix, final Interest interest, final Face face, final long interestFilterId,
+                             final InterestFilter filter) {
         counter++;
       }
     });
@@ -191,9 +214,66 @@ public class MockFaceTest {
     assertFalse(state.regFailed);
   }
 
+  @Test
+  public void testMockWithoutPacketLogging() throws Exception {
+    face = new MockFace(new MockFace.Options().setEnablePacketLogging(false));
+
+    // make request
+    expressInterest("/test/with/responses");
+    run(2);
+
+    assertEquals(0, face.sentInterests.size());
+  }
+
+  @Test
+  public void testMockWithoutMockRegistrationReply() throws Exception {
+    face = new MockFace(new MockFace.Options().setEnableRegistrationReply(false));
+
+    class State {
+      boolean regFailed = false;
+      boolean regSucceed = false;
+    }
+    final State state = new State();
+
+    LOG.info("Register prefix: /test/with/handlers");
+    face.registerPrefix(new Name("/test/with/handlers"), new OnInterestCallback() {
+      @Override
+      public void onInterest(final Name prefix, final Interest interest, final Face face, final long interestFilterId,
+                             final InterestFilter filter) {
+        LOG.info("Received interest, responding: " + interest.getName().toUri());
+        Data response = new Data(new Name("/test/with/handlers"));
+        response.setContent(new Blob("..."));
+        try {
+          face.putData(response);
+        } catch (IOException e) {
+          exception = e;
+        }
+        counter++;
+      }
+    }, new OnRegisterFailed() {
+      @Override
+      public void onRegisterFailed(final Name prefix) {
+        LOG.info("Prefix registration fails: " + prefix);
+        state.regFailed = true;
+        counter++;
+      }
+    }, new OnRegisterSuccess() {
+      @Override
+      public void onRegisterSuccess(final Name prefix, final long registeredPrefixId) {
+        LOG.info("Prefix registration succeed: " + prefix);
+        state.regSucceed = true;
+        counter++;
+      }
+    });
+
+    run(100, 1);
+    assertFalse(state.regSucceed);
+    assertTrue(state.regFailed);
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
-  private void run(int limit, int maxCounter) throws IOException, EncodingException, InterruptedException {
+  private void run(final int limit, final int maxCounter) throws IOException, EncodingException, InterruptedException {
     // process face until a response is received
     int allowedLoops = limit;
     while (counter < maxCounter && allowedLoops > 0) {
@@ -202,36 +282,27 @@ public class MockFaceTest {
       Thread.sleep(100);
     }
   }
-  
-  private void run(int limit) throws IOException, EncodingException, InterruptedException {
+
+  private void run(final int limit) throws IOException, EncodingException, InterruptedException {
     run(limit, 1);
   }
 
-  private void expressInterest(String name) throws IOException {
-    logger.info("Express interest: " + name);
+  private void expressInterest(final String name) throws IOException {
+    LOG.info("Express interest: " + name);
     face.expressInterest(new Interest(new Name(name)).setInterestLifetimeMilliseconds(1000), new OnData() {
       @Override
-      public void onData(Interest interest, Data data) {
+      public void onData(final Interest interest, final Data data) {
         counter++;
-        logger.fine("Received data");
+        LOG.fine("Received data");
         recvData = data;
       }
     }, new OnTimeout() {
       @Override
-      public void onTimeout(Interest interest) {
-        logger.fine("Received timeout");
+      public void onTimeout(final Interest interest) {
+        LOG.fine("Received timeout");
         counter++;
         isTimeout = true;
       }
     });
   }
-
-  /////////////////////////////////////////////////////////////////////////////
-
-  private static final Logger logger = Logger.getLogger(MockFaceTest.class.getName());
-  private MockFace face;
-  private int counter;
-  private Data recvData = null;
-  private boolean isTimeout = false;
-  private Exception exception = null;
 }

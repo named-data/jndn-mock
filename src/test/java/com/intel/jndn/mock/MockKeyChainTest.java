@@ -16,10 +16,12 @@ package com.intel.jndn.mock;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.security.KeyChain;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Test MockKeyChain
+ * Test MockKeyChain.
  *
  * @author Andrew Brown <andrew.brown@intel.com>
  */
