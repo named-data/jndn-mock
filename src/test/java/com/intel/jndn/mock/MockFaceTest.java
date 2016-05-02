@@ -181,7 +181,7 @@ public class MockFaceTest {
     }
     final State state = new State();
 
-    // connect transport
+    // connect callback
     face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(final Name prefix) {

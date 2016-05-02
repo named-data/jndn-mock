@@ -77,7 +77,7 @@ public class MockFace extends Face {
   public final List<SignalOnSendData> onSendData = new ArrayList<>();
 
   private static final Logger LOGGER = Logger.getLogger(MockFace.class.getName());
-  private MockFaceTransport transport;
+  private MockTransport transport;
   private KeyChain keyChain;
 
   /////////////////////////////////////////////////////////////////////////////
@@ -175,7 +175,7 @@ public class MockFace extends Face {
    *   new MockFace(new Options());
    *   // use onSendInterest.add(handler) and onSendData.add(handler)
    *   // to add custom logic when Interest or Data packet are sent
-   *   // from the upper level (to transport)
+   *   // from the upper level (to callback)
    * </pre>
    *
    * To create Face that just logs packets in sentInterests and sentData:
@@ -186,8 +186,8 @@ public class MockFace extends Face {
    * @param options see {@link Options}
    */
   public MockFace(final Options options) {
-    super(new MockFaceTransport(), null);
-    transport = (MockFaceTransport) node_.getTransport();
+    super(new MockTransport(), null);
+    transport = (MockTransport) node_.getTransport();
     transport.setOnSendBlock(new OnIncomingPacket());
 
     try {
@@ -222,7 +222,7 @@ public class MockFace extends Face {
   /**
    * Route incoming packets to the correct callbacks.
    */
-  private class OnIncomingPacket implements MockFaceTransport.OnSendBlockSignal {
+  private class OnIncomingPacket implements MockTransport.OnSendBlockSignal {
     /**
      * {@inheritDoc}
      */
@@ -252,7 +252,7 @@ public class MockFace extends Face {
           LOGGER.info("Received an unknown packet");
         }
       } catch (EncodingException e) {
-        LOGGER.log(Level.INFO, "Failed to decode incoming packet", e);
+        LOGGER.log(Level.INFO, "Failed to decodeParameters incoming packet", e);
       }
     }
   }
@@ -309,7 +309,7 @@ public class MockFace extends Face {
   }
 
   /**
-   * Mock reception of the Interest packet on the Face (from transport).
+   * Mock reception of the Interest packet on the Face (from callback).
    *
    * @param interest the mock-remote interest to add to the PIT
    * @throws EncodingException if packet encoding fails (it should not)
@@ -319,7 +319,7 @@ public class MockFace extends Face {
   }
 
   /**
-   * Mock reception of the Data packet on the Face (from transport).
+   * Mock reception of the Data packet on the Face (from callback).
    *
    * @param data the mock-remote data to add to the CS
    * @throws EncodingException if packet encoding fails (it should not)
@@ -329,7 +329,7 @@ public class MockFace extends Face {
   }
 
   /**
-   * @return the transport for this face
+   * @return the callback for this face
    */
   public Transport getTransport() {
     return transport;

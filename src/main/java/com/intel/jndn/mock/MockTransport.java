@@ -31,9 +31,9 @@ import net.named_data.jndn.transport.Transport;
  * @author Alexander Afanasyev, <aa@cs.ucla.edu>
  * @author Andrew Brown <andrew.brown@intel.com>
  */
-class MockFaceTransport extends Transport {
+public class MockTransport extends Transport {
   private OnSendBlockSignal onSendBlock;
-  private static final Logger LOGGER = Logger.getLogger(MockFaceTransport.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(MockTransport.class.getName());
   private boolean connected;
   private ElementReader elementReader;
   private final List<ByteBuffer> receiveBuffer = new LinkedList<>();
