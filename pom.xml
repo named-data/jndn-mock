@@ -51,7 +51,7 @@
   </dependencies>
   <profiles>
 
-    <!-- for scanning code using Sonarqube: `mvn test -P sonarqube` -->
+    <!-- Run `mvn clean package -Pfor-analysis` to send analyzed code to SonarQube -->
     <profile>
       <id>sonarqube</id>
       <build>
@@ -67,20 +67,14 @@
                   <goal>prepare-agent</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>post-unit-test</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
             </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.19.1</version>
-            <configuration>
-              <properties>
-                <property>
-                  <name>listener</name>
-                  <value>org.sonar.java.jacoco.JUnitListener</value>
-                </property>
-              </properties>
-            </configuration>
           </plugin>
           <plugin>
             <groupId>org.sonarsource.scanner.maven</groupId>
@@ -88,7 +82,8 @@
             <version>3.0.1</version>
             <executions>
               <execution>
-                <phase>test</phase>
+                <id>scan-with-sonar</id>
+                <phase>prepare-package</phase>
                 <goals>
                   <goal>sonar</goal>
                 </goals>
@@ -97,14 +92,6 @@
           </plugin>
         </plugins>
       </build>
-      <dependencies>
-        <dependency>
-          <groupId>org.codehaus.sonar-plugins.java</groupId>
-          <artifactId>sonar-jacoco-listeners</artifactId>
-          <version>3.2</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
     </profile>
 
     <!-- to deploy to Maven Central: `mvn deploy -P ossrh` -->
