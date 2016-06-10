@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 group = 'com.intel.jndn.mock'
-version = '1.0.1'
+version = '1.0.3'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -33,7 +33,7 @@ configurations {
 }
 
 dependencies {
-  compile 'net.named-data:jndn:0.10'
+  compile 'net.named-data:jndn:0.13'
 
   testCompile 'junit:junit:4.12'
   testRuntime 'org.slf4j:slf4j-api:1.7.16'
