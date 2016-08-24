@@ -10,11 +10,18 @@ import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnNetworkNack;
+import net.named_data.jndn.OnTimeout;
+import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.transport.Transport;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Logger;
 
 /**
@@ -140,7 +147,12 @@ public class MockForwarder {
     fib.add(registrationEntry);
   }
 
-  private class MockForwarderFace extends Face {
+  private class MockForwarderFace extends Face implements MeasurableFace {
+    Collection<Interest> sentInterests = new ArrayList<>();
+    Collection<Data> sentDatas = new ArrayList<>();
+    Collection<Interest> receivedInterests = new ArrayList<>();
+    Collection<Data> receivedDatas = new ArrayList<>();
+
     MockForwarderFace() {
       super(new MockTransport(), null);
       MockTransport transport = (MockTransport) node_.getTransport();
@@ -149,6 +161,40 @@ public class MockForwarder {
 
     Transport getTransport() {
       return node_.getTransport();
+    }
+
+    @Override
+    public long expressInterest(Interest interest, OnData onData, OnTimeout onTimeout,
+                                OnNetworkNack onNetworkNack, WireFormat wireFormat) throws IOException {
+      sentInterests.add(interest);
+      return super.expressInterest(interest, onData, onTimeout, onNetworkNack, wireFormat);
+    }
+
+    @Override
+    public long expressInterest(Name name, Interest interestTemplate, OnData onData, OnTimeout onTimeout,
+                                OnNetworkNack onNetworkNack, WireFormat wireFormat) throws IOException {
+      sentInterests.add(getInterestCopy(name, interestTemplate));
+      return super.expressInterest(name, interestTemplate, onData, onTimeout, onNetworkNack, wireFormat);
+    }
+
+    @Override
+    public Collection<Interest> sentInterests() {
+      return Collections.unmodifiableCollection(sentInterests);
+    }
+
+    @Override
+    public Collection<Data> sentDatas() {
+      return Collections.unmodifiableCollection(sentDatas);
+    }
+
+    @Override
+    public Collection<Interest> receivedInterests() {
+      return Collections.unmodifiableCollection(receivedInterests);
+    }
+
+    @Override
+    public Collection<Data> receivedDatas() {
+      return Collections.unmodifiableCollection(receivedDatas);
     }
   }
 }
