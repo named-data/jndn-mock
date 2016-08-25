@@ -28,8 +28,8 @@ import net.named_data.jndn.transport.Transport;
  * Non-public class for handling data buffering in NDN unit tests; works in
  * conjunction with {@link MockFace}.
  *
- * @author Alexander Afanasyev, <aa@cs.ucla.edu>
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Alexander Afanasyev, aa@cs.ucla.edu
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class MockTransport extends Transport {
   private OnSendBlockSignal onSendBlock;

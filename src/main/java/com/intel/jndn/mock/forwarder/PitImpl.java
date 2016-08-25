@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Naive implementation of a pending interest table
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class PitImpl implements MockForwarder.Pit {
@@ -52,16 +54,6 @@ public class PitImpl implements MockForwarder.Pit {
 
   public boolean has(Interest interest) {
     List<MockForwarder.PitEntry> entries = pit.get(interest.getName());
-
-    // TODO simplify
-    if (entries != null && entries.size() > 0) {
-      return true;
-//        for(int i = 0; i < entries.size(); i++){
-//          if(entries.get(i).interest.equals(interest)){
-//            return true;
-//          }
-//        }
-    }
-    return false;
+    return entries != null && !entries.isEmpty();
   }
 }

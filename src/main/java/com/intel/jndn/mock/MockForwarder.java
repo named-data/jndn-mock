@@ -23,13 +23,9 @@ import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
-import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
-import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.OnNetworkNack;
-import net.named_data.jndn.OnRegisterFailed;
-import net.named_data.jndn.OnRegisterSuccess;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.security.KeyChain;
@@ -43,6 +39,9 @@ import java.util.Collections;
 import java.util.logging.Logger;
 
 /**
+ * A mock forwarder for use in testing applications without network IO. It does not fully implement NFD functionality
+ * but currently does allow registering prefixes (to receive sent interests) and limited forwarding flag support.
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public class MockForwarder {
@@ -53,7 +52,7 @@ public class MockForwarder {
   private final Pit pit = new PitImpl();
 
   /**
-   * Forwarding information base API; use this for recording FIB entries
+   * Forwarding information base API; use this for recording FIB entries.
    */
   public interface Fib {
     /**
@@ -70,7 +69,7 @@ public class MockForwarder {
   }
 
   /**
-   * Entry in the FIB; use this for forwarding interest packets
+   * Entry in the FIB; use this for forwarding interest packets.
    */
   public interface FibEntry {
     /**
@@ -91,7 +90,7 @@ public class MockForwarder {
   }
 
   /**
-   * Pending interest table API; use this for recording incoming interests
+   * Pending interest table API; use this for recording incoming interests.
    */
   public interface Pit {
     /**
@@ -113,7 +112,7 @@ public class MockForwarder {
   }
 
   /**
-   * Entry in the PIT; use this for forwarding data packets
+   * Entry in the PIT; use this for forwarding data packets.
    */
   public interface PitEntry {
     /**
@@ -136,6 +135,15 @@ public class MockForwarder {
    * Mock-specific API for recording the source and destination of incoming interests
    */
   public interface OnInterestReceived {
+    /**
+     * Called when the mock forwarder receives incoming interests from a face; see {@link #register(Name,
+     * OnInterestReceived, ForwardingFlags)}.
+     *
+     * @param interest the incoming interest
+     * @param destinationTransport the transport that sent the interest; necessary for the forwarder to be able to
+     * register prefixes (TODO in the future this should also be a {@link Face}, perhaps rename as remoteFace).
+     * @param sourceFace the face receiving the interest; use {@link Face#putData(Data)} to reply
+     */
     void in(Interest interest, Transport destinationTransport, Face sourceFace);
   }
 
@@ -155,7 +163,7 @@ public class MockForwarder {
   public Face connect() {
     MockForwarderFace face = new MockForwarderFace();
     face.setCommandSigningInfo(keyChain, certName);
-    LOGGER.info("Connected face with: " + face.getTransport());
+    LOGGER.info("Connected new face using transport: " + face.getTransport());
     return face;
   }
 
@@ -163,13 +171,14 @@ public class MockForwarder {
     Face registrationFace = this.connect();
     FibEntry registrationEntry = new LocalFibEntry(prefix, callback, registrationFace, flags);
     fib.add(registrationEntry);
+    LOGGER.info("Registered new prefix to receive interests: " + prefix);
   }
 
   private class MockForwarderFace extends Face implements MeasurableFace {
-    Collection<Interest> sentInterests = new ArrayList<>();
-    Collection<Data> sentDatas = new ArrayList<>();
-    Collection<Interest> receivedInterests = new ArrayList<>();
-    Collection<Data> receivedDatas = new ArrayList<>();
+    final Collection<Interest> sentInterests = new ArrayList<>();
+    final Collection<Data> sentDatas = new ArrayList<>();
+    final Collection<Interest> receivedInterests = new ArrayList<>();
+    final Collection<Data> receivedDatas = new ArrayList<>();
 
     MockForwarderFace() {
       super(new MockTransport(), null);

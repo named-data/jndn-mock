@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Test MockKeyChain.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class MockKeyChainTest {
 

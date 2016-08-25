@@ -168,8 +168,7 @@ public class MockFaceTest {
   @Test
   public void testThatTransportConnectsOnPrefixRegistration() throws IOException, SecurityException {
     assertFalse(face.getTransport().getIsConnected());
-    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, (OnRegisterFailed) null,
-            (OnRegisterSuccess) null);
+    face.registerPrefix(new Name("/fake/prefix"), null, null, (OnRegisterSuccess) null);
     assertTrue(face.getTransport().getIsConnected());
   }
 
@@ -182,7 +181,7 @@ public class MockFaceTest {
     final State state = new State();
 
     // connect callback
-    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, new OnRegisterFailed() {
+    face.registerPrefix(new Name("/fake/prefix"), null, new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(final Name prefix) {
         state.regFailed = true;

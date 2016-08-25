@@ -36,8 +36,8 @@ import java.util.logging.Logger;
 /**
  * A client-side face for unit testing.
  *
- * @author Alexander Afanasyev, <aa@cs.ucla.edu>
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Alexander Afanasyev, aa@cs.ucla.edu
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public class MockFace extends Face {
   /**
@@ -163,7 +163,7 @@ public class MockFace extends Face {
    *
    * @throws SecurityException should not be thrown by this test class
    */
-  public MockFace() throws SecurityException {
+  public MockFace() {
     this(DEFAULT_OPTIONS);
   }
 

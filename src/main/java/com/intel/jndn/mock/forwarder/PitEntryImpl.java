@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 final class PitEntryImpl implements MockForwarder.PitEntry {
 
   private static final Logger LOGGER = Logger.getLogger(PitEntryImpl.class.getName());
-  public final Interest interest;
+  private final Interest interest;
   private final MockTransport transport;
   private boolean satisfied = false;
 

@@ -26,7 +26,7 @@ import net.named_data.jndn.security.SecurityException;
 /**
  * Create an in-memory key chain for use in NDN-related tests.
  *
- * @author Andrew Brown <andrew.brown@intel.com>
+ * @author Andrew Brown, andrew.brown@intel.com
  */
 public final class MockKeyChain {
   /**
