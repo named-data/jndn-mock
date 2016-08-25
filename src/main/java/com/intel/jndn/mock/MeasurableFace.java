@@ -20,11 +20,28 @@ import net.named_data.jndn.Interest;
 import java.util.Collection;
 
 /**
+ * Provide API for measuring packet use on a given face
+ *
  * @author Andrew Brown, andrew.brown@intel.com
  */
 public interface MeasurableFace {
+  /**
+   * @return all interest packets sent by the measured face
+   */
   Collection<Interest> sentInterests();
+
+  /**
+   * @return all data packets sent by the measured face
+   */
   Collection<Data> sentDatas();
+
+  /**
+   * @return all interest packets received by the measured face
+   */
   Collection<Interest> receivedInterests();
+
+  /**
+   * @return all data packets received by the measured face
+   */
   Collection<Data> receivedDatas();
 }

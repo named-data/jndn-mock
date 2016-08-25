@@ -23,9 +23,13 @@ import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.OnNetworkNack;
+import net.named_data.jndn.OnRegisterFailed;
+import net.named_data.jndn.OnRegisterSuccess;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.security.KeyChain;
@@ -189,6 +193,12 @@ public class MockForwarder {
                                 OnNetworkNack onNetworkNack, WireFormat wireFormat) throws IOException {
       sentInterests.add(getInterestCopy(name, interestTemplate));
       return super.expressInterest(name, interestTemplate, onData, onTimeout, onNetworkNack, wireFormat);
+    }
+
+    @Override
+    public void putData(Data data, WireFormat wireFormat) throws IOException {
+      sentDatas.add(data);
+      super.putData(data, wireFormat);
     }
 
     @Override
