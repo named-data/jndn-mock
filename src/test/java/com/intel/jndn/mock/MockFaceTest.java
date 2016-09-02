@@ -1,6 +1,6 @@
 /*
  * jndn-mock
- * Copyright (c) 2015, Intel Corporation.
+ * Copyright (c) 2016, Intel Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU Lesser General Public License,
@@ -168,8 +168,7 @@ public class MockFaceTest {
   @Test
   public void testThatTransportConnectsOnPrefixRegistration() throws IOException, SecurityException {
     assertFalse(face.getTransport().getIsConnected());
-    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, (OnRegisterFailed) null,
-            (OnRegisterSuccess) null);
+    face.registerPrefix(new Name("/fake/prefix"), null, null, (OnRegisterSuccess) null);
     assertTrue(face.getTransport().getIsConnected());
   }
 
@@ -181,8 +180,8 @@ public class MockFaceTest {
     }
     final State state = new State();
 
-    // connect transport
-    face.registerPrefix(new Name("/fake/prefix"), (OnInterestCallback) null, new OnRegisterFailed() {
+    // connect callback
+    face.registerPrefix(new Name("/fake/prefix"), null, new OnRegisterFailed() {
       @Override
       public void onRegisterFailed(final Name prefix) {
         state.regFailed = true;

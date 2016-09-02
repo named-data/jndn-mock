@@ -11,30 +11,37 @@
  * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
  * more details.
  */
+
 package com.intel.jndn.mock;
 
-import net.named_data.jndn.Name;
-import net.named_data.jndn.security.KeyChain;
-import org.junit.Test;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import java.util.Collection;
 
 /**
- * Test MockKeyChain.
+ * Provide API for measuring packet use on a given face
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */
-public class MockKeyChainTest {
+public interface MeasurableFace {
+  /**
+   * @return all interest packets sent by the measured face
+   */
+  Collection<Interest> sentInterests();
 
   /**
-   * Test of configure method, of class MockKeyChain.
+   * @return all data packets sent by the measured face
    */
-  @Test
-  public void testConfigure() throws Exception {
-    String identity = "/test/name";
-    KeyChain keyChain = MockKeyChain.configure(new Name(identity));
-    assertEquals(identity, keyChain.getDefaultIdentity().toUri());
-    assertTrue(keyChain.getDefaultCertificateName().toUri().startsWith(identity));
-  }
+  Collection<Data> sentDatas();
+
+  /**
+   * @return all interest packets received by the measured face
+   */
+  Collection<Interest> receivedInterests();
+
+  /**
+   * @return all data packets received by the measured face
+   */
+  Collection<Data> receivedDatas();
 }

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.intel.jndn.mock</groupId>
   <artifactId>jndn-mock</artifactId>
-  <version>1.0.3</version>
+  <version>1.1.0</version>
   <name>jndn-mock</name>
   <description>Tools for testing NDN Java code without using network IO.</description>
   <url>https://github.com/01org/jndn-utils</url>
