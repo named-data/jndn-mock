@@ -25,6 +25,8 @@ import net.named_data.jndn.encoding.tlv.Tlv;
 import net.named_data.jndn.encoding.tlv.TlvDecoder;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.security.pib.PibImpl;
+import net.named_data.jndn.security.tpm.TpmBackEnd;
 import net.named_data.jndn.transport.Transport;
 
 import java.nio.ByteBuffer;
@@ -90,7 +92,7 @@ public class MockFace extends Face {
      * Callback called when an Interest is sent out through face (towards NFD).
      * @param interest interest being sent out
      */
-    void emit(final Interest interest);
+    void emit(Interest interest);
   }
 
   /**
@@ -102,7 +104,7 @@ public class MockFace extends Face {
      *
      * @param data data being sent out
      */
-    void emit(final Data data);
+    void emit(Data data);
   }
 
   /**
@@ -296,7 +298,7 @@ public class MockFace extends Face {
       data.setContent(response.wireEncode());
       try {
         keyChain.sign(data);
-      } catch (SecurityException e) {
+      } catch (SecurityException | KeyChain.Error | TpmBackEnd.Error | PibImpl.Error e) {
         LOGGER.log(Level.FINE, "MockKeyChain signing failed", e);
       }
 

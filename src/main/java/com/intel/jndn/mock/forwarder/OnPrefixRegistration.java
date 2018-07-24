@@ -24,6 +24,8 @@ import net.named_data.jndn.Interest;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.security.pib.PibImpl;
+import net.named_data.jndn.security.tpm.TpmBackEnd;
 import net.named_data.jndn.transport.Transport;
 
 import java.io.IOException;
@@ -96,7 +98,7 @@ public class OnPrefixRegistration implements MockForwarder.OnInterestReceived {
   private void signResponse(Data data) {
     try {
       keyChain.sign(data);
-    } catch (SecurityException e) {
+    } catch (SecurityException | KeyChain.Error | TpmBackEnd.Error | PibImpl.Error e) {
       LOGGER.log(Level.FINE, "MockKeyChain signing failed", e);
     }
   }

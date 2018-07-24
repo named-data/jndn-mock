@@ -20,8 +20,8 @@ buildscript {
 }
 
 plugins {
-  id "org.sonarqube" version "1.2"
-  id 'net.saliman.cobertura' version '2.3.0'
+  id "org.sonarqube" version "2.6.2"
+  id 'net.saliman.cobertura' version '2.5.4'
 }
 
 apply plugin: 'java'
@@ -29,8 +29,9 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 //apply plugin: 'checkstyle'
 
-group = 'com.intel.jndn.mock'
-version = '1.1.0'
+// group = 'com.intel.jndn.mock'
+group = 'net.named-data.jndn-extra'
+version = '1.1.1'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -47,12 +48,12 @@ configurations {
 }
 
 dependencies {
-  compile 'net.named-data:jndn:0.13'
+  compile 'net.named-data:jndn:0.17'
 
   testCompile 'junit:junit:4.12'
-  testRuntime 'org.slf4j:slf4j-api:1.7.16'
+  testRuntime 'org.slf4j:slf4j-api:1.7.25'
 
-  checkstyleConfig "com.puppycrawl.tools:checkstyle:6.15"
+  checkstyleConfig "com.puppycrawl.tools:checkstyle:8.11"
 }
 
 task javadocJar(type: Jar) {
