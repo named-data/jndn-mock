@@ -25,6 +25,8 @@ to build, sign, and upload archives to maven:
 
 To get list of other targets, use `./gradlew tasks`.
 
+## Tests
+
 ### Unit Tests
 
 To run unit tests:

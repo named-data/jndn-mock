@@ -1,35 +1,20 @@
-/*
- * jndn-mock
- * Copyright (c) 2016, Intel Corporation.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU Lesser General Public License,
- * version 3, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
- * more details.
- */
-
 buildscript {
   repositories {
+    mavenLocal()
     jcenter()
     mavenCentral()
   }
 }
 
 plugins {
-  id "org.sonarqube" version "2.6.2"
-  id 'net.saliman.cobertura' version '2.5.4'
+  id 'java'
+  id 'maven'
+  id 'signing'
+  //id 'checkstyle'
+  id 'org.sonarqube' version '2.8'
+  id 'net.saliman.cobertura' version '3.0.0'
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
-//apply plugin: 'checkstyle'
-
-// group = 'com.intel.jndn.mock'
 group = 'net.named-data.jndn-extra'
 version = '1.1.1'
 
@@ -38,9 +23,12 @@ targetCompatibility = JavaVersion.VERSION_1_7
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
-  jcenter()
   mavenLocal()
+  jcenter()
   mavenCentral()
+  maven {
+    url "https://oss.sonatype.org/content/repositories/releases/"
+  }
 }
 
 configurations {
@@ -125,18 +113,18 @@ uploadArchives {
         name 'jndn-mock'
         packaging 'jar'
         description 'Tools for testing NDN Java code without using network IO'
-        url 'https://github.com/01org/jndn-mock'
+        url 'https://github.com/named-data/jndn-mock'
 
         scm {
-          connection 'scm:git:https://github.com/01org/jndn-mock'
-          developerConnection 'scm:git:https://github.com/01org/jndn-mock'
-          url 'https://github.com/01org/jndn-mock'
+          connection 'scm:git:https://github.com/named-data/jndn-mock.git'
+          developerConnection 'scm:git:ssh://git@github.com/named-data/jndn-mock.git'
+          url 'https://github.com/named-data/jndn-mock'
         }
 
         licenses {
           license {
             name 'GNU Lesser General Public License, Version 3.0+'
-            url 'http://www.gnu.org/licenses/lgpl.html'
+            url 'https://www.gnu.org/licenses/lgpl-3.0.html'
           }
         }
 
