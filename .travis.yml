@@ -1,18 +1,12 @@
+version: ~> 1.0
 language: java
+os: linux
+dist: bionic
+arch:
+  - amd64
+  - arm64
 jdk:
-  - oraclejdk7
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "o0r0rGKo4Dp6KJU76aM5WHEexf39Eu76wUKug7XLGtQcyY4FItZFbScDzIUE6MaRsXUMbbE29Td8mfsbm+amHarYxhnpqAGORI1t+R8+hzo5KG0Ja+14W4d3cBu+vUjM45nHi5KM+/GRAyQa4JqgCm4vB/mLuJKhDuGVGzZs5Fk="
-
-addons:
-  coverity_scan:
-    project:
-      name: "01org/jndn-mock"
-      description: "Build submitted via Travis CI"
-    notification_email: andrew.brown@intel.com
-    build_command_prepend: "mvn clean"
-    build_command:   "mvn -DskipTests=true compile"
-    branch_pattern: coverity_scan
+  - openjdk8
+  - openjdk11
+  - openjdk12
+  - openjdk13
