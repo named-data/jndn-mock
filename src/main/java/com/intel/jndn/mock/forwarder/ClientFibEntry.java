@@ -16,9 +16,9 @@ package com.intel.jndn.mock.forwarder;
 
 import com.intel.jndn.mock.MockForwarder;
 import com.intel.jndn.mock.MockTransport;
-import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.RegistrationOptions;
 import net.named_data.jndn.transport.Transport;
 
 import java.util.logging.Logger;
@@ -31,9 +31,9 @@ class ClientFibEntry implements MockForwarder.FibEntry {
   private static final Logger LOGGER = Logger.getLogger(ClientFibEntry.class.getName());
   private final Name prefix;
   private final MockTransport transport;
-  private final ForwardingFlags flags;
+  private final RegistrationOptions flags;
 
-  ClientFibEntry(Name prefix, MockTransport transport, ForwardingFlags flags) {
+  ClientFibEntry(Name prefix, MockTransport transport, RegistrationOptions flags) {
     this.prefix = prefix;
     this.transport = transport;
     this.flags = flags;
@@ -51,7 +51,7 @@ class ClientFibEntry implements MockForwarder.FibEntry {
   }
 
   @Override
-  public ForwardingFlags getFlags() {
+  public RegistrationOptions getFlags() {
     return flags;
   }
 }

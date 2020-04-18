@@ -16,9 +16,9 @@ package com.intel.jndn.mock.forwarder;
 
 import com.intel.jndn.mock.MockForwarder;
 import net.named_data.jndn.Face;
-import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.RegistrationOptions;
 import net.named_data.jndn.transport.Transport;
 
 import java.util.logging.Logger;
@@ -32,9 +32,9 @@ public class LocalFibEntry implements MockForwarder.FibEntry {
   private final Name prefix;
   private final MockForwarder.OnInterestReceived callback;
   private final Face registrationFace;
-  private final ForwardingFlags flags;
+  private final RegistrationOptions flags;
 
-  public LocalFibEntry(Name prefix, MockForwarder.OnInterestReceived callback, Face registrationFace, ForwardingFlags flags) {
+  public LocalFibEntry(Name prefix, MockForwarder.OnInterestReceived callback, Face registrationFace, RegistrationOptions flags) {
     this.prefix = prefix;
     this.callback = callback;
     this.registrationFace = registrationFace;
@@ -52,7 +52,7 @@ public class LocalFibEntry implements MockForwarder.FibEntry {
   }
 
   @Override
-  public ForwardingFlags getFlags() {
+  public RegistrationOptions getFlags() {
     return flags;
   }
 }

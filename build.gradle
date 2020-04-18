@@ -36,12 +36,12 @@ configurations {
 }
 
 dependencies {
-  compile 'net.named-data:jndn:0.17'
+  compile 'net.named-data:jndn:0.24'
 
   testCompile 'junit:junit:4.12'
-  testRuntime 'org.slf4j:slf4j-api:1.7.25'
+  testRuntime 'org.slf4j:slf4j-api:1.7.30'
 
-  checkstyleConfig "com.puppycrawl.tools:checkstyle:8.11"
+  checkstyleConfig 'com.puppycrawl.tools:checkstyle:8.23'
 }
 
 task javadocJar(type: Jar) {

@@ -21,12 +21,12 @@ import com.intel.jndn.mock.forwarder.OnPrefixRegistration;
 import com.intel.jndn.mock.forwarder.PitImpl;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
-import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
 import net.named_data.jndn.OnNetworkNack;
 import net.named_data.jndn.OnTimeout;
+import net.named_data.jndn.RegistrationOptions;
 import net.named_data.jndn.encoding.WireFormat;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
@@ -86,7 +86,7 @@ public class MockForwarder {
     /**
      * @return the entry flags
      */
-    ForwardingFlags getFlags();
+    RegistrationOptions getFlags();
   }
 
   /**
@@ -137,7 +137,7 @@ public class MockForwarder {
   public interface OnInterestReceived {
     /**
      * Called when the mock forwarder receives incoming interests from a face; see {@link #register(Name,
-     * OnInterestReceived, ForwardingFlags)}.
+     * OnInterestReceived, RegistrationOptions)}.
      *
      * @param interest the incoming interest
      * @param destinationTransport the transport that sent the interest; necessary for the forwarder to be able to
@@ -157,7 +157,7 @@ public class MockForwarder {
 
     OnPrefixRegistration onPrefixRegistration = new OnPrefixRegistration(keyChain, fib);
     Name registrationPrefix = new Name("/localhost/nfd/rib/register");
-    register(registrationPrefix, onPrefixRegistration, new ForwardingFlags());
+    register(registrationPrefix, onPrefixRegistration, new RegistrationOptions());
   }
 
   public Face connect() {
@@ -167,7 +167,7 @@ public class MockForwarder {
     return face;
   }
 
-  public void register(Name prefix, OnInterestReceived callback, ForwardingFlags flags) {
+  public void register(Name prefix, OnInterestReceived callback, RegistrationOptions flags) {
     Face registrationFace = this.connect();
     FibEntry registrationEntry = new LocalFibEntry(prefix, callback, registrationFace, flags);
     fib.add(registrationEntry);

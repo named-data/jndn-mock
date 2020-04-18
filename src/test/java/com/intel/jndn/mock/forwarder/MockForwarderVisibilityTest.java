@@ -16,9 +16,9 @@ package com.intel.jndn.mock.forwarder;
 
 import com.intel.jndn.mock.MockForwarder;
 import net.named_data.jndn.Face;
-import net.named_data.jndn.ForwardingFlags;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.RegistrationOptions;
 import net.named_data.jndn.transport.Transport;
 import org.junit.Test;
 
@@ -40,6 +40,6 @@ public class MockForwarderVisibilityTest {
       public void in(Interest interest, Transport destinationTransport, Face sourceFace) {
         // do nothing
       }
-    }, new ForwardingFlags());
+    }, new RegistrationOptions());
   }
 }
