@@ -54,6 +54,10 @@ task sourcesJar(type: Jar) {
   from sourceSets.main.allSource
 }
 
+tasks.withType(JavaCompile) {
+  options.deprecation = true
+}
+
 tasks.withType(Test) {
   reports.html.destination = file("${reporting.baseDir}/${name}")
   testLogging {
