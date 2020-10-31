@@ -1,72 +1,59 @@
-# Created by https://www.gitignore.io
-
-### Maven ###
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-
-
-### Java ###
+# Java class files
 *.class
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-
-# Linux temporary files
-*~
-
-# Eclipse specific project files
-.classpath
-.project
-.settings
-
-# Netbeans specific project files
-nbactions.xml
-
-# generated files
+# Generated files
 bin/
 gen/
 out/
-obj/
-build/
-app/src/*/libs/
-app/src/*/obj/
+
+# Gradle files
+.gradle
+**/build/
+!src/**/build/
+# Ignore Gradle GUI config
+gradle-app.setting
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+# Cache of project
+.gradletasknamecache
 
 # Local configuration file (sdk path, etc)
 local.properties
+
+# Log Files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
 
 # Eclipse project files
 .classpath
 .project
 
-# OSX files
-.DS_Store
-
-# Windows thumbnail db
-Thumbs.db
-
-# IDEA/Android Studio project files, because
-# the project can be imported from settings.gradle
-.idea
+# IntelliJ
 *.iml
-nb-configuration.xml
-
-# Old-style IDEA project files
-*.ipr
-*.iws
-
-# Gradle cache
-.gradle
-gradle.properties
-
-# Sandbox stuff
-_sandbox
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+# Android Studio 3 in .gitignore file.
+.idea/caches
+.idea/modules.xml
+# Comment next line if keeping position of elements in Navigation Editor is relevant for you
+.idea/navEditor.xml
 
 # Emacs stuff
 prj.el
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db

@@ -8,4 +8,5 @@ If you would like to become a contributor to the official repository, please fol
 * ***(Former Maintainer)*** Andrew Brown <https://github.com/abrown>
 * Eric Newberry <https://ericnewberry.com>
 * Hans Pabst <https://www.linkedin.com/in/pabst>
+* Davide Pesavento <https://github.com/Pesa>
 * Barry Pivitt <https://github.com/brpivitt>
