@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Naive implementation of a pending interest table
+ * Naive implementation of a Pending Interest Table.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

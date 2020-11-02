@@ -56,7 +56,9 @@ public class OnPrefixRegistration implements MockForwarder.OnInterestReceived {
     LOGGER.info("Received registration request: " + interest.toUri());
     ControlParameters params = decodeParameters(interest);
 
-    MockForwarder.FibEntry entry = new ClientFibEntry(params.getName(), (MockTransport) destinationTransport, params.getForwardingFlags());
+    MockForwarder.FibEntry entry = new ClientFibEntry(params.getName(),
+                                                      (MockTransport) destinationTransport,
+                                                      params.getForwardingFlags());
     fib.add(entry);
     LOGGER.info("Added new route " + params.getName() + " to: " + destinationTransport);
 

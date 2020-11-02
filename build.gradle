@@ -2,7 +2,7 @@ plugins {
   id 'java-library'
   id 'maven' // TODO: migrate to 'maven-publish'
   id 'signing'
-  //id 'checkstyle'
+  id 'checkstyle'
   id 'org.sonarqube' version '3.0'
   id 'net.saliman.cobertura' version '4.0.0'
 }
@@ -50,11 +50,11 @@ tasks.withType(Test) {
   }
 }
 
-tasks.withType(Checkstyle) {
-  checkstyleClasspath = project.configurations.checkstyleConfig
-  checkstyleTest {
-    configFile file('config/checkstyle/checkstyle-test.xml')
-  }
+checkstyle {
+  toolVersion '8.23'
+}
+checkstyleTest {
+  configFile file('config/checkstyle/checkstyle-test.xml')
 }
 
 cobertura {

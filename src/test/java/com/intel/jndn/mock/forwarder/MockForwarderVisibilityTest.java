@@ -23,7 +23,7 @@ import net.named_data.jndn.transport.Transport;
 import org.junit.Test;
 
 /**
- * Ensure MockForwarder methods are visible publicly; does not test functionality
+ * Ensure MockForwarder methods are visible publicly; does not test functionality.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

@@ -132,7 +132,7 @@ public class MockForwarder {
   }
 
   /**
-   * Mock-specific API for recording the source and destination of incoming interests
+   * Mock-specific API for recording the source and destination of incoming interests.
    */
   public interface OnInterestReceived {
     /**

@@ -20,7 +20,7 @@ import net.named_data.jndn.Interest;
 import java.util.Collection;
 
 /**
- * Provide API for measuring packet use on a given face
+ * Provide API for measuring packet use on a given face.
  *
  * @author Andrew Brown, andrew.brown@intel.com
  */

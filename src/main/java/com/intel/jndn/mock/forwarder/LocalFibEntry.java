@@ -34,7 +34,8 @@ public class LocalFibEntry implements MockForwarder.FibEntry {
   private final Face registrationFace;
   private final RegistrationOptions flags;
 
-  public LocalFibEntry(Name prefix, MockForwarder.OnInterestReceived callback, Face registrationFace, RegistrationOptions flags) {
+  public LocalFibEntry(Name prefix, MockForwarder.OnInterestReceived callback, Face registrationFace,
+                       RegistrationOptions flags) {
     this.prefix = prefix;
     this.callback = callback;
     this.registrationFace = registrationFace;
