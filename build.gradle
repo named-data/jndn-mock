@@ -22,7 +22,7 @@ repositories {
 dependencies {
   api 'net.named-data:jndn:0.24'
 
-  testImplementation 'junit:junit:4.12'
+  testImplementation 'junit:junit:4.13.1'
   testRuntimeOnly 'org.slf4j:slf4j-api:1.7.30'
 }
 
